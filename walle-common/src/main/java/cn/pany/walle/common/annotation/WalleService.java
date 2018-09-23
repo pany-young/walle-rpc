@@ -16,4 +16,6 @@ import java.lang.annotation.Target;
 public @interface WalleService {
 
     Class<?> value();
+    String appName();
+    String version() default "1.0.0";
 }

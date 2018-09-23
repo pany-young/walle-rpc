@@ -17,31 +17,28 @@ package cn.pany.walle.remoting.api;
 
 
 import cn.pany.walle.common.URL;
-import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.remoting.exception.RemotingException;
-import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import io.netty.channel.Channel;
 /**
- * NettyChannelHandler.
+ * NettyWalleChannelHandler.
  *
  * @author pany.yang
  */
 @Slf4j
-public final class NettyChannelHandler extends AbstractWalleChannel {
+public final class NettyWalleChannelHandler implements WalleChannelHandler {
 
-    private static final ConcurrentMap<Channel, NettyChannelHandler> channelMap = new ConcurrentHashMap<Channel, NettyChannelHandler>();
+    private static final ConcurrentMap<Channel, NettyWalleChannelHandler> channelMap = new ConcurrentHashMap<Channel, NettyWalleChannelHandler>();
 
     private final Channel channel;
 
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
-    private NettyChannelHandler(Channel channel, URL url, ChannelHandler handler) {
+    private NettyWalleChannelHandler(Channel channel, URL url, WalleChannelHandler handler) {
 
         if ( channel == null) {
             throw new IllegalArgumentException("netty channel == null;");
@@ -49,13 +46,13 @@ public final class NettyChannelHandler extends AbstractWalleChannel {
         this.channel =  channel;
     }
 
-    public static NettyChannelHandler getOrAddChannel(Channel ch, URL url, ChannelHandler handler) {
+    public static NettyWalleChannelHandler getOrAddChannel(Channel ch, URL url, WalleChannelHandler handler) {
         if (ch == null) {
             return null;
         }
-        NettyChannelHandler ret = channelMap.get(ch);
+        NettyWalleChannelHandler ret = channelMap.get(ch);
         if (ret == null) {
-            NettyChannelHandler nettyChannel = new NettyChannelHandler(ch, url, handler);
+            NettyWalleChannelHandler nettyChannel = new NettyWalleChannelHandler(ch, url, handler);
             if (ch.isActive()) {
                 ret = channelMap.putIfAbsent(ch, nettyChannel);
             }
@@ -76,13 +73,13 @@ public final class NettyChannelHandler extends AbstractWalleChannel {
 //        return (InetSocketAddress) channel.localAddress();
 //    }
 
-    public InetSocketAddress getRemoteAddress() {
-        return (InetSocketAddress) channel.remoteAddress();
-    }
+//    public InetSocketAddress getRemoteAddress() {
+//        return (InetSocketAddress) channel.remoteAddress();
+//    }
 
-    public boolean isConnected() {
-        return channel.isActive();
-    }
+//    public boolean isConnected() {
+//        return channel.isActive();
+//    }
 
 //    public void send(Object message, boolean sent) throws RemotingException {
 //        boolean success = true;
@@ -161,7 +158,7 @@ public final class NettyChannelHandler extends AbstractWalleChannel {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
-        NettyChannelHandler other = (NettyChannelHandler) obj;
+        NettyWalleChannelHandler other = (NettyWalleChannelHandler) obj;
         if (channel == null) {
             if (other.channel != null) return false;
         } else if (!channel.equals(other.channel)) return false;

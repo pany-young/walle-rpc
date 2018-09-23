@@ -5,9 +5,11 @@ import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.utils.ExecutorUtil;
 import cn.pany.walle.common.utils.NamedThreadFactory;
 import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.remoting.api.NettyChannelHandler;
 import cn.pany.walle.remoting.api.WalleChannel;
 import cn.pany.walle.remoting.exception.RemotingException;
+import cn.pany.walle.remoting.protocol.WalleBizRequest;
+import cn.pany.walle.remoting.protocol.WalleBizResponse;
+import cn.pany.walle.remoting.protocol.WalleMessage;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by pany on 17/12/13.
  */
 @Slf4j
-public abstract class AbstractClient implements WalleChannel{
+public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleBizResponse>{
 
     private volatile URL url;
 
@@ -93,6 +95,7 @@ public abstract class AbstractClient implements WalleChannel{
                             + NetUtils.getLocalHost() +   ", channel is " + this.getChannel());
                 }
             }
+            afterConnect();
             reconnect_count.set(0);
         } catch (RemotingException e) {
             throw e;
@@ -125,6 +128,8 @@ public abstract class AbstractClient implements WalleChannel{
      */
     protected abstract void doConnect() throws Throwable;
 
+    protected abstract void afterConnect() throws Throwable;
+
     /**
      * disConnect to server.
      *
@@ -144,32 +149,32 @@ public abstract class AbstractClient implements WalleChannel{
         return (InetSocketAddress) channel.localAddress();
     }
 
-    public void send(Object message, boolean sent) throws RemotingException {
-        if (!isConnected()) {
-            connect();
-        }
-        boolean success = true;
-        int timeout = 0;
-        Channel channel = getChannel();
-        try {
-            ChannelFuture future = channel.writeAndFlush(message);
-            if (sent) {
-                timeout = NettyConstant.DEFAULT_TIMEOUT;
-                success = future.await(timeout);
-            }
-            Throwable cause = future.cause();
-            if (cause != null) {
-                throw cause;
-            }
-        } catch (Throwable e) {
-            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
-        }
-
-        if (!success) {
-            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
-                    + "in timeout(" + timeout + "ms) limit");
-        }
-    }
+//    public void send(Object message, boolean sent) throws RemotingException {
+//        if (!isConnected()) {
+//            connect();
+//        }
+//        boolean success = true;
+//        int timeout = 0;
+//        Channel channel = getChannel();
+//        try {
+//            ChannelFuture future = channel.writeAndFlush(message);
+//            if (sent) {
+//                timeout = NettyConstant.DEFAULT_TIMEOUT;
+//                success = future.await(timeout);
+//            }
+//            Throwable cause = future.cause();
+//            if (cause != null) {
+//                throw cause;
+//            }
+//        } catch (Throwable e) {
+//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
+//        }
+//
+//        if (!success) {
+//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
+//                    + "in timeout(" + timeout + "ms) limit");
+//        }
+//    }
 
 
     public void disconnect() {
@@ -224,22 +229,22 @@ public abstract class AbstractClient implements WalleChannel{
     }
 
     public InetSocketAddress getRemoteAddress() {
-        NettyChannelHandler channel = getChannel();
+        Channel channel = getChannel();
         if (channel == null)
             return getUrl().toInetSocketAddress();
-        return channel.getRemoteAddress();
+        return (InetSocketAddress) channel.remoteAddress();
     }
 
     public boolean isConnected() {
-        NettyChannelHandler channel = getChannel();
+        Channel channel = getChannel();
         if (channel == null)
             return false;
-        return channel.isConnected();
+        return channel.isActive();
     }
 
     @Override
     public URL getUrl() {
-        return null;
+        return this.url;
     }
     @Override
     public void startClose() {
@@ -250,4 +255,7 @@ public abstract class AbstractClient implements WalleChannel{
     public boolean isClosed() {
         return false;
     }
+
+
+    public abstract WalleBizResponse send(WalleMessage request) throws RemotingException;
 }

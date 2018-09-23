@@ -15,11 +15,9 @@
  */
 package cn.pany.walle.common.utils;
 
-import com.alibaba.dubbo.common.Constants;
-import com.alibaba.dubbo.common.io.UnsafeStringWriter;
-import com.alibaba.dubbo.common.logger.Logger;
-import com.alibaba.dubbo.common.logger.LoggerFactory;
-import com.alibaba.fastjson.JSON;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -117,14 +115,6 @@ public final class StringUtils {
         }
         return true;
     }
-
-    public static boolean isContains(String values, String value) {
-        if (values == null || values.length() == 0) {
-            return false;
-        }
-        return isContains(Constants.COMMA_SPLIT_PATTERN.split(values), value);
-    }
-
     /**
      * @param values
      * @param value
@@ -154,42 +144,6 @@ public final class StringUtils {
         return true;
     }
 
-    /**
-     * @param e
-     * @return string
-     */
-    public static String toString(Throwable e) {
-        UnsafeStringWriter w = new UnsafeStringWriter();
-        PrintWriter p = new PrintWriter(w);
-        p.print(e.getClass().getName());
-        if (e.getMessage() != null) {
-            p.print(": " + e.getMessage());
-        }
-        p.println();
-        try {
-            e.printStackTrace(p);
-            return w.toString();
-        } finally {
-            p.close();
-        }
-    }
-
-    /**
-     * @param msg
-     * @param e
-     * @return string
-     */
-    public static String toString(String msg, Throwable e) {
-        UnsafeStringWriter w = new UnsafeStringWriter();
-        w.write(msg + "\n");
-        PrintWriter p = new PrintWriter(w);
-        try {
-            e.printStackTrace(p);
-            return w.toString();
-        } finally {
-            p.close();
-        }
-    }
 
     /**
      * translat.
@@ -345,20 +299,6 @@ public final class StringUtils {
         return parseKeyValuePair(qs, "\\&");
     }
 
-    public static String getServiceKey(Map<String, String> ps) {
-        StringBuilder buf = new StringBuilder();
-        String group = ps.get(Constants.GROUP_KEY);
-        if (group != null && group.length() > 0) {
-            buf.append(group).append("/");
-        }
-        buf.append(ps.get(Constants.INTERFACE_KEY));
-        String version = ps.get(Constants.VERSION_KEY);
-        if (version != null && version.length() > 0) {
-            buf.append(":").append(version);
-        }
-        return buf.toString();
-    }
-
     public static String toQueryString(Map<String, String> ps) {
         StringBuilder buf = new StringBuilder();
         if (ps != null && ps.size() > 0) {
@@ -404,23 +344,4 @@ public final class StringUtils {
         return buf == null ? camelName : buf.toString();
     }
 
-    public static String toArgumentString(Object[] args) {
-        StringBuilder buf = new StringBuilder();
-        for (Object arg : args) {
-            if (buf.length() > 0) {
-                buf.append(Constants.COMMA_SEPARATOR);
-            }
-            if (arg == null || ReflectUtils.isPrimitives(arg.getClass())) {
-                buf.append(arg);
-            } else {
-                try {
-                    buf.append(JSON.toJSONString(arg));
-                } catch (Exception e) {
-                    logger.warn(e.getMessage(), e);
-                    buf.append(arg);
-                }
-            }
-        }
-        return buf.toString();
-    }
 }

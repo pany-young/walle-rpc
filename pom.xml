@@ -33,6 +33,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>1.2.39</version>
+            </dependency>
+            <dependency>
                 <groupId>cn.pany.walle</groupId>
                 <artifactId>walle-common</artifactId>
                 <version>${walle.version}</version>
@@ -160,6 +165,11 @@
                 <groupId>com.dyuproject.protostuff</groupId>
                 <artifactId>protostuff-runtime</artifactId>
                 <version>1.0.10</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

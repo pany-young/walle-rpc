@@ -18,7 +18,7 @@ package cn.pany.walle.remoting.api;
 
 import cn.pany.walle.remoting.exception.RemotingException;
 
-public interface ChannelHandler {
+public interface WalleChannelHandler {
 
     /**
      * on walleChannel connected.

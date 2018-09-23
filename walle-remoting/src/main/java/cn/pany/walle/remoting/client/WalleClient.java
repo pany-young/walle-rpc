@@ -1,9 +1,10 @@
 package cn.pany.walle.remoting.client;
 
 import cn.pany.walle.common.*;
+import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.remoting.api.ChannelHandler;
-import cn.pany.walle.remoting.api.NettyChannelHandler;
+import cn.pany.walle.remoting.api.NettyWalleChannelHandler;
+import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.codec.WalleMessageDecoder;
 import cn.pany.walle.remoting.codec.WalleMessageEncoder;
 import cn.pany.walle.remoting.exception.RemotingException;
@@ -11,6 +12,7 @@ import cn.pany.walle.remoting.protocol.SessionObj;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
+import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -35,9 +37,8 @@ import java.util.concurrent.*;
 @Slf4j
 public class WalleClient extends AbstractClient implements ApplicationContextAware {
 
-    private Map<String, Object> handlerMap = new HashMap<String, Object>(); // 存放接口名与服务对象之间的映射关系
 
-    public static final ConcurrentHashMap<String, Object> pushFutureMap = new ConcurrentHashMap();
+    public static final ConcurrentHashMap<String, CountDownLatch> pushFutureMap = new ConcurrentHashMap();
 
     public static final ConcurrentHashMap<String, WalleBizResponse> responseMap = new ConcurrentHashMap();
 
@@ -45,15 +46,30 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
     private URL url;
     private volatile Channel channel; // volatile, please copy reference to use
 
-    public static List<SessionObj> sessionObjList = new ArrayList<SessionObj>();
+    public SessionObj sessionObj = new SessionObj();
 
-    ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
+//    private Map<String, Object> handlerMap = new HashMap<String, Object>(); // 存放接口名与服务对象之间的映射关系
+//    public static List<SessionObj> sessionObjList = new ArrayList<SessionObj>();
+//    ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
 
-    public WalleClient(URL url, ChannelHandler handler) throws RemotingException {
+    private WalleApp walleApp;
+    List<String> interfaceList;
+    Map<String,WalleClient> interfaceMap=new HashMap<>();
+
+    public WalleClient(WalleApp walleApp,URL url) throws RemotingException {
         super(url);
+        this.walleApp=walleApp;
+    }
+    public WalleClient(WalleApp walleApp,URL url,List<String> interfaceList) throws RemotingException {
+        super(url);
+        this.walleApp=walleApp;
+        this.interfaceList = interfaceList;
+        for(String interfaceDetail : interfaceList){
+            interfaceMap.put(interfaceDetail,this);
+        }
     }
 
-//    @Resource
+    //    @Resource
 //    private ServiceDiscovery serviceDiscovery;
 
 
@@ -65,19 +81,20 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
     public void doOpen() {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
-            bootstrap = new Bootstrap();
-            bootstrap.group(group).channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel channel) throws Exception {
-                            channel.pipeline().addLast(new WalleMessageDecoder(1024 * 1024, 4, 4))
-                                    .addLast("MessageEncoder", new WalleMessageEncoder())
-                                    .addLast("readTimeoutHandler", new ReadTimeoutHandler(100));
+            io.netty.channel.ChannelHandler handler = new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel channel) throws Exception {
+                    channel.pipeline().addLast(new WalleMessageDecoder(1024 * 1024, 4, 4))
+                            .addLast("MessageEncoder", new WalleMessageEncoder())
+                            .addLast("readTimeoutHandler", new ReadTimeoutHandler(100));
 //                                    .addLast("LoginAuthHandler", new LoginAuthReqHandler())
 //                                    .addLast("HeartBeatHandler", new HeartBeatReqHandler())
 //                                    .addLast("BizReqHandler", new BizReqHandler());
-                        }
-                    })
+                }
+            };
+            bootstrap = new Bootstrap();
+            bootstrap.group(group).channel(NioSocketChannel.class)
+                    .handler(handler)
                     .option(ChannelOption.SO_KEEPALIVE, true);
 
         } catch (Exception e) {
@@ -109,7 +126,7 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
                             }
                             oldChannel.close();
                         } finally {
-                            NettyChannelHandler.removeChannelIfDisconnected(oldChannel);
+                            NettyWalleChannelHandler.removeChannelIfDisconnected(oldChannel);
                         }
                     }
                 } finally {
@@ -121,10 +138,13 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
                             newChannel.close();
                         } finally {
                             WalleClient.this.channel = null;
-                            NettyChannelHandler.removeChannelIfDisconnected(newChannel);
+                            NettyWalleChannelHandler.removeChannelIfDisconnected(newChannel);
                         }
                     } else {
                         WalleClient.this.channel = newChannel;
+                        //获取接口列表 todo
+
+
                     }
                 }
             } else if (future.cause() != null) {
@@ -143,45 +163,134 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
     }
 
     @Override
+    protected void afterConnect() throws Throwable {
+        //获取接口信息
+//        walleApp.getInterFace();
+    }
+
+    @Override
     protected void doDisConnect() throws Throwable {
+        //todo 断开连接处理
+        //1.是否断开重连，重连次数
 
     }
 
+    @Override
+    protected Channel getChannel() {
+        return this.channel;
+    }
 
 
-    public WalleBizResponse send(WalleMessage request) throws Exception {
-        long random = (new Date().getTime()) % sessionObjList.size();
-        SessionObj sessionObj = sessionObjList.get((int) random);
+//    @Override
+//    public WalleBizResponse send(WalleMessage request,boolean sent) throws Exception {
+//    if (!isConnected()) {
+//            connect();
+//        }
+//        boolean success = true;
+//        int timeout = 0;
+//        Channel channel = getChannel();
+//        try {
+//            ChannelFuture future = channel.writeAndFlush(message);
+//
+//        } catch (Throwable e) {
+//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
+//        }
+//
+//        if (!success) {
+//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
+//                    + "in timeout(" + timeout + "ms) limit");
+//        }
+//    }
+    @Override
+    public WalleBizResponse send(WalleMessage request) throws RemotingException {
+        if (!isConnected()) {
+            connect();
+        }
+
+//        long random = (new Date().getTime()) % sessionObjList.size();
+//        SessionObj sessionObj = sessionObjList.get((int) random);
         ChannelFuture channelFuture = sessionObj.getChannel().writeAndFlush(request);
 
+        //todo 这里强转可能会失败
         String requestId = ((WalleBizRequest) request.getBody()).getRequestId();
+
+//        try {
+//            channelFuture.await(NettyConstant.DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+//        } catch (InterruptedException e) {
+//            log.error("requestId [{}] is time out",requestId,e);
+//            return null;
+//        }
+
         CountDownLatch countDownLatch = new CountDownLatch(1);
         pushFutureMap.putIfAbsent(requestId, countDownLatch);
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
-
-        WalleBizResponse response = responseMap.get(requestId);
-        responseMap.remove(requestId);
-        return response;
+        try {
+            if(countDownLatch.await(NettyConstant.DEFAULT_TIMEOUT, TimeUnit.SECONDS)){
+                WalleBizResponse response = responseMap.get(requestId);
+                responseMap.remove(requestId);
+                return response;
+            }else {
+                pushFutureMap.remove(requestId);
+                WalleBizResponse response = responseMap.get(requestId);
+                responseMap.remove(requestId);
+                return response;
+            }
+        } catch (InterruptedException e) {
+            log.error("requestId [{}] is time out",requestId,e);
+            return null;
+        }
     }
 
 
     public static void received(String requestId, WalleBizResponse walleBizResponse) {
 
-        responseMap.putIfAbsent(requestId, walleBizResponse);
 
-        CountDownLatch countDownLatch = (CountDownLatch) pushFutureMap.get(requestId);
+        CountDownLatch countDownLatch = pushFutureMap.get(requestId);
+        if(countDownLatch!=null){
+            countDownLatch.countDown();
+            pushFutureMap.remove(requestId);
+            responseMap.putIfAbsent(requestId, walleBizResponse);
+        }else {
+            log.info("requestId :[{}] not in pushFutureMap,rep:[{}]",requestId, JSON.toJSONString(walleBizResponse) );
+        }
 
-        countDownLatch.countDown();
-        pushFutureMap.remove(requestId);
     }
 
 
+    public WalleApp getWalleApp() {
+        return walleApp;
+    }
+
+    public void setWalleApp(WalleApp walleApp) {
+        this.walleApp = walleApp;
+    }
+
+    public List<String> getInterfaceList() {
+        return interfaceList;
+    }
+
+    public void setInterfaceList(List<String> interfaceList) {
+        this.interfaceList = interfaceList;
+    }
+
+    public Map<String, WalleClient> getInterfaceMap() {
+        return interfaceMap;
+    }
+
+    public void setInterfaceMap(Map<String, WalleClient> interfaceMap) {
+        this.interfaceMap = interfaceMap;
+    }
 
     @Override
-    public void send(Object message) throws RemotingException {
-
+    public URL getUrl() {
+        return url;
     }
 
+    public void setUrl(URL url) {
+        this.url = url;
+    }
 
+    public void setChannel(Channel channel) {
+        this.channel = channel;
+    }
 }

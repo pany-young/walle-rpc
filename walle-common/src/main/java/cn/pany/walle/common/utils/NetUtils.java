@@ -15,9 +15,9 @@
  */
 package cn.pany.walle.common.utils;
 
-import com.alibaba.dubbo.common.URL;
-import com.alibaba.dubbo.common.logger.Logger;
-import com.alibaba.dubbo.common.logger.LoggerFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
@@ -143,28 +143,6 @@ public class NetUtils {
     public static String getLocalHost() {
         InetAddress address = getLocalAddress();
         return address == null ? LOCALHOST : address.getHostAddress();
-    }
-
-    public static String filterLocalHost(String host) {
-        if (host == null || host.length() == 0) {
-            return host;
-        }
-        if (host.contains("://")) {
-            URL u = URL.valueOf(host);
-            if (NetUtils.isInvalidLocalHost(u.getHost())) {
-                return u.setHost(NetUtils.getLocalHost()).toFullString();
-            }
-        } else if (host.contains(":")) {
-            int i = host.lastIndexOf(':');
-            if (NetUtils.isInvalidLocalHost(host.substring(0, i))) {
-                return NetUtils.getLocalHost() + host.substring(i);
-            }
-        } else {
-            if (NetUtils.isInvalidLocalHost(host)) {
-                return NetUtils.getLocalHost();
-            }
-        }
-        return host;
     }
 
     /**

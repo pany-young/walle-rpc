@@ -296,7 +296,7 @@ public final class URL implements Serializable {
      */
     public String getIp() {
         if (ip == null) {
-            ip = NetUtils.getIpByHost(host);
+            ip =NetUtils.getIpByHost(host);
         }
         return ip;
     }

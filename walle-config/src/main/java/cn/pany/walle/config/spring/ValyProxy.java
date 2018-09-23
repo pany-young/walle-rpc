@@ -1,5 +1,6 @@
 package cn.pany.walle.config.spring;
 
+import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.protocol.MessageType;
 import cn.pany.walle.remoting.client.WalleClient;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 public class ValyProxy {
 
-    public <T> T create(Map<String, String> map) {
+    public static  <T> T create(Map<String, String> map,WalleInvoker walleInvoker) {
         Class<?> interfaceClass;
         ClassLoader clazzLoader = Thread.currentThread()
                 .getContextClassLoader();
@@ -31,8 +32,10 @@ public class ValyProxy {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        WalleProtocol walleProtocol=new WalleProtocol();
-        walleProtocol.refer(interfaceClass,url);
+        URL url= URL.valueOf(map.get("xxx"));
+
+//        WalleProtocol walleProtocol=new WalleProtocol();
+//        walleProtocol.refer(interfaceClass,url);
 
         T t=(T) Proxy.newProxyInstance(
                 interfaceClass.getClassLoader(),
@@ -45,17 +48,18 @@ public class ValyProxy {
                         Header header = new Header();
                         header.setType(MessageType.SERVICE_REQ);
                         nettyMessage.setHeader(header);
-                        WalleBizRequest valyBizRequest = new WalleBizRequest();
-                        valyBizRequest.setRequestId(UUID.randomUUID().toString());
-                        valyBizRequest.setClassName(method.getDeclaringClass().getName());
-                        valyBizRequest.setMethodName(method.getName());
-                        valyBizRequest.setParameterTypes(method.getParameterTypes());
-                        valyBizRequest.setParameters(args);
-                        nettyMessage.setBody(valyBizRequest);
+                        WalleBizRequest walleBizRequest = new WalleBizRequest();
+                        walleBizRequest.setRequestId(UUID.randomUUID().toString());
+                        walleBizRequest.setClassName(method.getDeclaringClass().getName());
+                        walleBizRequest.setMethodName(method.getName());
+                        walleBizRequest.setParameterTypes(method.getParameterTypes());
+                        walleBizRequest.setParameters(args);
+                        nettyMessage.setBody(walleBizRequest);
+
+                        WalleBizResponse response =  walleInvoker.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
 
 
-
-                        WalleBizResponse response = walleClient.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
+//                        WalleBizResponse response = walleClient.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
 
                         if (!response.getSuccess()) {
                             throw response.getError();

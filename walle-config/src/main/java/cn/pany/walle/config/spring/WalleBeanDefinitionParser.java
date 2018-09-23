@@ -11,12 +11,12 @@ import org.w3c.dom.Element;
 /**
  * Created by pany on 16/9/6.
  */
-public class ValyBeanDefinitionParser implements BeanDefinitionParser {
-    private static final Logger logger = LoggerFactory.getLogger(ValyBeanDefinitionParser.class);
+public class WalleBeanDefinitionParser implements BeanDefinitionParser {
+    private static final Logger logger = LoggerFactory.getLogger(WalleBeanDefinitionParser.class);
 
     private final Class<?> beanClass;
 
-    public ValyBeanDefinitionParser(Class<?> beanClass) {
+    public WalleBeanDefinitionParser(Class<?> beanClass) {
         this.beanClass = beanClass;
     }
 
