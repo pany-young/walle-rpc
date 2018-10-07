@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsd:schema xmlns="http://walle.pany.cn/schema/walle"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:beans="http://www.springframework.org/schema/beans"
+            xmlns:tool="http://www.springframework.org/schema/tool"
+            targetNamespace="http://walle.pany.cn/schema/walle"  >
+
+
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.springframework.org/schema/beans"/>
+    <xsd:import namespace="http://www.springframework.org/schema/tool"/>
+
+
+    <xsd:element name="registry" type="registryType">
+        <xsd:annotation>
+            <xsd:documentation><![CDATA[ registry default config ]]></xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+
+    <xsd:complexType name="registryType">
+        <xsd:attribute name="id" type="xsd:ID">
+        </xsd:attribute>
+        <xsd:attribute name="address" type="xsd:string">
+        </xsd:attribute>
+    </xsd:complexType>
+
+
+    <xsd:element name="app" type="appType">
+        <xsd:annotation>
+            <xsd:documentation><![CDATA[ app default config ]]></xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+
+    <xsd:complexType name="appType">
+        <xsd:attribute name="id" type="xsd:ID">
+        </xsd:attribute>
+        <xsd:attribute name="appName" type="xsd:string">
+        </xsd:attribute>
+        <xsd:attribute name="version" type="xsd:string">
+        </xsd:attribute>
+        <xsd:attribute name="registry" type="xsd:IDREF">
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:element name="reference" type="referenceType">
+    </xsd:element>
+
+    <xsd:complexType name="referenceType">
+        <xsd:attribute name="id" type="xsd:ID">
+        </xsd:attribute>
+        <xsd:attribute name="interface" type="xsd:token" use="required">
+            <xsd:annotation>
+                <xsd:documentation><![CDATA[ The service interface class name. ]]></xsd:documentation>
+                <xsd:appinfo>
+                    <tool:annotation>
+                        <tool:expected-type type="java.lang.Class"/>
+                    </tool:annotation>
+                </xsd:appinfo>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="app" type="xsd:IDREF">
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>

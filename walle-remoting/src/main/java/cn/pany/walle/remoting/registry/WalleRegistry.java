@@ -1,0 +1,175 @@
+package cn.pany.walle.remoting.registry;
+
+import cn.pany.walle.common.annotation.WalleService;
+import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.model.InterfaceDetail;
+import cn.pany.walle.common.model.ServerInfo;
+import com.alibaba.fastjson.JSON;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
+import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.state.ConnectionStateListener;
+import org.apache.curator.retry.RetryNTimes;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by pany on 16/8/25.l
+ */
+public class WalleRegistry {
+    private static final Logger log = LoggerFactory.getLogger(WalleRegistry.class);
+
+    //    private CountDownLatch latch = new CountDownLatch(1);
+    public final static String ZK_SPLIT = "/";
+//    public static String INIT_PATH = "/cn_pany/walle";
+
+    private CuratorFramework client;
+
+    private String registryAddress;
+    private volatile String registryState;
+
+    public WalleRegistry(String registryAddress) {
+        this.registryAddress = registryAddress;
+    }
+
+    public CuratorFramework register(String registryAddress) throws Exception {
+        this.registryAddress = registryAddress;
+        if (client == null) {
+            this.client = connectServer();
+        }
+
+        return this.client;
+    }
+
+    public CuratorFramework register() throws Exception {
+        if (client == null) {
+            this.client = connectServer();
+        }
+        return this.client;
+    }
+
+
+    //连接zookpeer
+    private synchronized CuratorFramework connectServer() throws Exception {
+        if (client == null) {
+            client = CuratorFrameworkFactory
+                    .builder()
+                    .connectString(registryAddress)
+                    .namespace(NettyConstant.NAME_SPACE)
+                    .retryPolicy(new RetryNTimes(2000, 20000))
+                    .build();
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            client.start();
+//            createInitNode(client);
+        }
+
+        return client;
+    }
+
+    public void addServiceListener(Map<String, List<InterfaceDetail>> tempAppMap, String serverAddress) throws Exception {
+        try {
+            ConnectionStateListener connectionStateListener = new ConnectionStateListener() {
+                public void stateChanged(CuratorFramework client, ConnectionState newState) {
+                    if (ConnectionState.CONNECTED == newState || ConnectionState.RECONNECTED == newState) {
+                        for (Map.Entry<String, List<InterfaceDetail>> tempApp : tempAppMap.entrySet()) {
+                            List<InterfaceDetail> interfaceList = tempApp.getValue();
+                            if (interfaceList == null || interfaceList.isEmpty()) {
+                                continue;
+                            }
+                            String appName = tempApp.getKey();
+                            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + serverAddress;
+
+                            ServerInfo serverInfo = new ServerInfo();
+                            serverInfo.setInterfaceDetailList(interfaceList);
+                            try {
+                                setData(appPath, JSON.toJSONString(serverInfo));
+                            } catch (Exception e) {
+                                log.error("", e);
+                            }
+                        }
+                    }
+                }
+            };
+
+            register().getConnectionStateListenable().addListener(connectionStateListener);
+
+
+
+        } catch (Exception e) {
+            log.error("", e);
+        }
+    }
+
+//    private void createInitNode(CuratorFramework client) throws Exception {
+//        client.create().creatingParentContainersIfNeeded()
+//                .withMode(CreateMode.PERSISTENT)//存储类型（临时的还是持久的）
+//                .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)//访问权限
+//                .forPath(INIT_PATH);//创建的路径
+//
+//    }
+
+    public void createPersistentNode(String path) throws Exception {
+        register().create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).
+                forPath(path);
+    }
+
+    public void createEphemeralNode(String path) throws Exception {
+        register().create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).
+                forPath(path);
+    }
+
+    private void setDataNode(String path, String data) throws Exception {
+        register().create().creatingParentContainersIfNeeded().withMode(CreateMode.EPHEMERAL).
+                forPath(path, (data).getBytes());
+    }
+
+    public void setData(String path, String data) throws Exception {
+        if (data != null) {
+            setDataNode(path, data);
+        }
+    }
+
+    public byte[] getData(String path) throws Exception {
+        return register().getData().forPath(path);
+    }
+
+    public List<String> getChildrenList(String path) throws Exception {
+        return register().getChildren().forPath(path);
+    }
+
+    public String getRegistryAddress() {
+        return registryAddress;
+    }
+
+    public void setRegistryAddress(String registryAddress) {
+        this.registryAddress = registryAddress;
+    }
+
+    public boolean isRegister() {
+        if (client == null) {
+            return false;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            return false;
+        }
+        return true;
+    }
+}
