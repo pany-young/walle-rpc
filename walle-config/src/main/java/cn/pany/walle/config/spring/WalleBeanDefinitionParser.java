@@ -3,6 +3,7 @@ package cn.pany.walle.config.spring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -28,16 +29,47 @@ public class WalleBeanDefinitionParser implements BeanDefinitionParser {
         beanDefinition.setLazyInit(false);
 
         String id = element.getAttribute("id");
-        String interfaceName = element.getAttribute("interface");
+        if (RegistryBean.class.equals(beanClass)) {
+            String address = element.getAttribute("address");
+            beanDefinition.getPropertyValues().addPropertyValue("id", id);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "address", address);
 
-        beanDefinition.getPropertyValues().addPropertyValue("id", id);
-        beanDefinition.getPropertyValues().addPropertyValue(
-                "interfaceName", interfaceName);
+        } else if (ReferenceBean.class.equals(beanClass)) {
+//            String id = element.getAttribute("id");
+            String interfaceName = element.getAttribute("interface");
+            String version = element.getAttribute("version");
 
+            String appName = element.getAttribute("app");
+            RuntimeBeanReference appBean = new RuntimeBeanReference(appName);
+
+
+            beanDefinition.getPropertyValues().addPropertyValue("id", id);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "interfaceName", interfaceName);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "version", version);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "walleApp", appBean);
+            try {
+                beanDefinition.getPropertyValues().addPropertyValue(
+                        "interfaceClass", Class.forName(interfaceName));
+            } catch (ClassNotFoundException e) {
+                logger.error("",e);
+            }
+
+        } else if (WalleAppBean.class.equals(beanClass)) {
+            String appName = element.getAttribute("appName");
+
+            String registryName = element.getAttribute("registry");
+            RuntimeBeanReference registryBean = new RuntimeBeanReference(registryName);
+            beanDefinition.getPropertyValues().addPropertyValue("id", id);
+            beanDefinition.getPropertyValues().addPropertyValue("appName", appName);
+            beanDefinition.getPropertyValues().addPropertyValue("registry", registryBean);
+
+        }
         parserContext.getRegistry().registerBeanDefinition(id,
                 beanDefinition);
-
-
         return beanDefinition;
     }
 

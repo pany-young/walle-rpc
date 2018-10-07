@@ -21,7 +21,7 @@ import java.util.UUID;
  * Created by pany on 16/9/8.
  */
 
-public class ValyProxy {
+public class WalleProxy {
 
     public static  <T> T create(Map<String, String> map,WalleInvoker walleInvoker) {
         Class<?> interfaceClass;
@@ -32,7 +32,7 @@ public class ValyProxy {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        URL url= URL.valueOf(map.get("xxx"));
+//        URL url= URL.valueOf(map.get("xxx"));
 
 //        WalleProtocol walleProtocol=new WalleProtocol();
 //        walleProtocol.refer(interfaceClass,url);
@@ -57,10 +57,10 @@ public class ValyProxy {
                         nettyMessage.setBody(walleBizRequest);
 
                         WalleBizResponse response =  walleInvoker.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
-
-
 //                        WalleBizResponse response = walleClient.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
-
+                        if(response == null){
+                            return null;
+                        }
                         if (!response.getSuccess()) {
                             throw response.getError();
                         } else {

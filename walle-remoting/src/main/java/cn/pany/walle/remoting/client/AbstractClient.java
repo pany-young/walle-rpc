@@ -32,19 +32,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleBizResponse>{
 
     private volatile URL url;
-
-    // closing closed分别表示关闭流程中、完成关闭
-    private volatile boolean closing;
-
-    private volatile boolean closed;
-
-    private static final AtomicInteger CLIENT_THREAD_POOL_ID = new AtomicInteger();
-    private static final ScheduledThreadPoolExecutor reconnectExecutorService = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("DubboClientReconnectTimer", true));
     private final Lock connectLock = new ReentrantLock();
     private final AtomicInteger reconnect_count = new AtomicInteger(0);
 
-    protected volatile ExecutorService executor;
-    private volatile ScheduledFuture<?> reconnectExecutorFuture = null;
+//    protected volatile ExecutorService executor;
+//    private volatile ScheduledFuture<?> reconnectExecutorFuture = null;
 
     public AbstractClient(URL url) throws RemotingException {
 
@@ -74,8 +66,8 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
                             + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
 
-        executor =  new ThreadPoolExecutor(200, 250, 0, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(50));
+//        executor =  new ThreadPoolExecutor(200, 250, 0, TimeUnit.MILLISECONDS,
+//                new LinkedBlockingQueue<Runnable>(50));
     }
 
 
@@ -146,36 +138,10 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
 
     public InetSocketAddress getLocalAddress() {
         Channel channel = getChannel();
+        if (channel == null)
+            return getUrl().toInetSocketAddress();
         return (InetSocketAddress) channel.localAddress();
     }
-
-//    public void send(Object message, boolean sent) throws RemotingException {
-//        if (!isConnected()) {
-//            connect();
-//        }
-//        boolean success = true;
-//        int timeout = 0;
-//        Channel channel = getChannel();
-//        try {
-//            ChannelFuture future = channel.writeAndFlush(message);
-//            if (sent) {
-//                timeout = NettyConstant.DEFAULT_TIMEOUT;
-//                success = future.await(timeout);
-//            }
-//            Throwable cause = future.cause();
-//            if (cause != null) {
-//                throw cause;
-//            }
-//        } catch (Throwable e) {
-//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
-//        }
-//
-//        if (!success) {
-//            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
-//                    + "in timeout(" + timeout + "ms) limit");
-//        }
-//    }
-
 
     public void disconnect() {
         connectLock.lock();
@@ -204,13 +170,13 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
     }
 
     public void close() {
-        try {
-            if (executor != null) {
-                ExecutorUtil.shutdownNow(executor, 100);
-            }
-        } catch (Throwable e) {
-            log.warn(e.getMessage(), e);
-        }
+//        try {
+//            if (executor != null) {
+//                ExecutorUtil.shutdownNow(executor, 100);
+//            }
+//        } catch (Throwable e) {
+//            log.warn(e.getMessage(), e);
+//        }
         try {
             disconnect();
         } catch (Throwable e) {
@@ -224,7 +190,7 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
     }
 
     public void close(int timeout) {
-        ExecutorUtil.gracefulShutdown(executor, timeout);
+//        ExecutorUtil.gracefulShutdown(executor, timeout);
         close();
     }
 
@@ -245,10 +211,6 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
     @Override
     public URL getUrl() {
         return this.url;
-    }
-    @Override
-    public void startClose() {
-
     }
 
     @Override

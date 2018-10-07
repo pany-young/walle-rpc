@@ -121,7 +121,6 @@ public interface WalleChannel<REQ,REP>{
      */
     void close(int timeout);
 
-    void startClose();
 
     /**
      * is closed.

@@ -24,5 +24,5 @@ public final class NettyConstant {
     public static final String INTERFACE_CLASS_KEY ="interfaceClass";
 
 
-    public static final int DEFAULT_TIMEOUT = 1000;
+    public static final int DEFAULT_TIMEOUT = 10;
 }

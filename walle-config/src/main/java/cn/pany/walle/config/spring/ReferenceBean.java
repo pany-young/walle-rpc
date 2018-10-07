@@ -1,21 +1,14 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.URL;
-import cn.pany.walle.common.constants.Constants;
 import cn.pany.walle.common.constants.NettyConstant;
-import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.common.utils.UrlUtils;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.client.WalleClient;
-import cn.pany.walle.remoting.registry.WalleRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,9 +66,13 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<walle:reference interface=\"\" /> interface not allow null!");
         }
+        if(interfaceClass == null){
+            interfaceClass = Class.forName(interfaceName);
+        }
+
         Map<String, String> map = new HashMap();
 
-        invokerUrl = interfaceClass.getSimpleName() + interfaceName + version;
+        invokerUrl =  interfaceName + version;
         invoker = new WalleInvoker<>(interfaceClass, invokerUrl);
 //        ValyRpcProxy valyRpcProxy = (ValyRpcProxy) this.applicationContext.getBean("valyRpcProxy");
 //        Object consumerProxy = valyRpcProxy.create(intefaceClazz);
@@ -95,27 +92,31 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         //从zookeeper获取服务端的信息
         //进行连接
         //对所需接口
-        walleApp.init();
+        if(walleApp.init()){
+            Set<WalleClient> walleClientSet = walleApp.getWalleClientSet();
 
-
-        Set<WalleClient> walleClientSet = walleApp.getWalleClientSet();
-
-        if (walleClientSet == null || walleClientSet.size() == 0) {
-            throw new IllegalStateException("No such any client on app:" + walleApp.getAppName() + ".");
-        }
-
-        if (walleClientSet != null && walleClientSet.size() > 0) {
-            //从client里面匹配接口
-            for (WalleClient client : walleClientSet) {
-                //class#method:version
-                invoker.addToClients(client.getInterfaceMap().get(invokerUrl));
+            if (walleClientSet == null || walleClientSet.size() == 0) {
+                throw new IllegalStateException("No such any client on app:" + walleApp.getAppName() + ".");
             }
+
+            if (walleClientSet != null && walleClientSet.size() > 0) {
+                //从client里面匹配接口
+                for (WalleClient client : walleClientSet) {
+                    //class#method:version
+                    invoker.addToClients(client.getInterfaceMap().get(invokerUrl));
+                }
+            }
+
+
+            ref = (T) WalleProxy.create(map, invoker);
+            // 创建服务代理
+            return ref;
+        }else {
+            return null;
         }
 
 
-        ref = (T) ValyProxy.create(map, invoker);
-        // 创建服务代理
-        return ref;
+
     }
 
     @Override

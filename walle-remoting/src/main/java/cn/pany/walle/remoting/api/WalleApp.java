@@ -1,11 +1,15 @@
 package cn.pany.walle.remoting.api;
 
 import cn.pany.walle.common.URL;
+import cn.pany.walle.common.model.InterfaceDetail;
+import cn.pany.walle.common.model.ServerInfo;
 import cn.pany.walle.common.utils.UrlUtils;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.registry.WalleRegistry;
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -16,10 +20,11 @@ import java.util.Set;
 public class WalleApp {
     private String appName;
 
-    private Set<WalleClient> walleClientSet;
+    private Set<WalleClient> walleClientSet=new HashSet<>();
 
     private WalleRegistry walleRegistry;
     private  AppState appState=AppState.INIT;
+    private  String version;
     enum AppState{
         INIT(1),INITED(2),CLOSE(9);
 
@@ -30,6 +35,11 @@ public class WalleApp {
     public WalleApp(String appName, WalleRegistry walleRegistry) {
         this.walleRegistry = walleRegistry;
         this.appName = appName;
+    }
+    public WalleApp(String appName, WalleRegistry walleRegistry,String version) {
+        this.walleRegistry = walleRegistry;
+        this.appName = appName;
+        this.version= version;
     }
     /*从zookeeper获取服务端的信息
     进行连接
@@ -45,22 +55,30 @@ public class WalleApp {
             if (walleRegistry.isRegister()) {
                 walleRegistry.register();
             }
-            List<String> serverList = walleRegistry.getData(appName);
+            List<String> serverList = walleRegistry.getChildrenList(WalleRegistry.ZK_SPLIT + appName);
 
             //ip:port#version@protocol
             for (String serverDetail : serverList) {
                 URL url = UrlUtils.parseURL(serverDetail, null);
-                List<String> interfaceList =walleRegistry.getData(appName + "/" + serverDetail);
-                WalleClient walleClient = new WalleClient(this,url,interfaceList);
-                walleClient.doOpen();
 
-                walleClientSet.add(walleClient);
+                byte[] interfaceListByte = walleRegistry.
+                getData(WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + serverDetail);
+                List<InterfaceDetail> interfaceList =
+                        JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailList();
+
+                WalleClient walleClient = new WalleClient(this,url,interfaceList,walleRegistry);
+                if(!walleClientSet.contains(walleClient)){
+                    walleClient.doOpen();
+                    walleClientSet.add(walleClient);
+                }
+
+
             }
         } catch (Exception e) {
             log.error("", e);
             return false;
         }
-
+        appState=AppState.INITED;
         return true;
     }
 

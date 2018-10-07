@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContextAware;
  */
 public class RegistryBean implements FactoryBean<WalleRegistry>, ApplicationContextAware {
     private transient ApplicationContext applicationContext;
+    protected String id;
     // 注册中心
     private String address;
 
@@ -32,10 +33,7 @@ public class RegistryBean implements FactoryBean<WalleRegistry>, ApplicationCont
             walleRegistry=new WalleRegistry(address);
             walleRegistry.register();
         }
-
-
         return  walleRegistry;
-
     }
 
     @Override
@@ -53,4 +51,11 @@ public class RegistryBean implements FactoryBean<WalleRegistry>, ApplicationCont
         this.applicationContext = applicationContext;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 }

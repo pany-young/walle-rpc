@@ -24,11 +24,11 @@ public class HeartBeatRespHandler extends ChannelInboundHandlerAdapter {
 			// 返回心跳应答消息
 			if (message.getHeader() != null
 				&& message.getHeader().getType() == MessageType.HEARTBEAT_REQ) {
-//			    log.info("Receive client heart beat message : ---> "
-//				    + message);
+			    log.debug("Receive client heart beat message : ---> "
+						+ message);
 				WalleMessage heartBeat = buildHeatBeat();
-//			    log.info("Send heart beat response message to client : ---> "
-//					    + heartBeat);
+			    log.debug("Send heart beat response message to client : ---> "
+					    + heartBeat);
 			    ctx.writeAndFlush(heartBeat);
 			} else
 			    ctx.fireChannelRead(msg);

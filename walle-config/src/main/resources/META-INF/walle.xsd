@@ -18,7 +18,7 @@
     </xsd:element>
 
     <xsd:complexType name="registryType">
-        <xsd:attribute name="registryId" type="xsd:ID">
+        <xsd:attribute name="id" type="xsd:ID">
         </xsd:attribute>
         <xsd:attribute name="address" type="xsd:string">
         </xsd:attribute>
@@ -32,9 +32,13 @@
     </xsd:element>
 
     <xsd:complexType name="appType">
-        <xsd:attribute name="appName" type="xsd:ID">
+        <xsd:attribute name="id" type="xsd:ID">
+        </xsd:attribute>
+        <xsd:attribute name="appName" type="xsd:string">
         </xsd:attribute>
         <xsd:attribute name="version" type="xsd:string">
+        </xsd:attribute>
+        <xsd:attribute name="registry" type="xsd:IDREF">
         </xsd:attribute>
     </xsd:complexType>
 
@@ -54,7 +58,7 @@
                 </xsd:appinfo>
             </xsd:annotation>
         </xsd:attribute>
-        <xsd:attribute name="app" type="xsd:string">
+        <xsd:attribute name="app" type="xsd:IDREF">
         </xsd:attribute>
     </xsd:complexType>
 </xsd:schema>

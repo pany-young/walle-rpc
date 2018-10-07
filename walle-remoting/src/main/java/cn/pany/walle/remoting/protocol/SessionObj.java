@@ -11,7 +11,7 @@ public class SessionObj {
 
     private int port;//端口
 
-    private Channel channel;
+    private volatile Channel channel;
 
     public String getRemoteIP() {
         return remoteIP;

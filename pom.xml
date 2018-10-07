@@ -1,19 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    WalleRpc
+    Copyright 2018 pany young
+
+    The WalleRpc Project licenses this file to you under the Apache License,
+    version 2.0 (the "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+    License for the specific language governing permissions and limitations
+    under the License.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.pany.walle</groupId>
-    <artifactId>walle-all</artifactId>
+    <artifactId>walle-rpc</artifactId>
     <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
     <modules>
         <module>walle-remoting</module>
         <module>walle-common</module>
-        <module>walle-demo</module>
         <module>walle-config</module>
     </modules>
+
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A license</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>walle.io</id>
+            <name>pany</name>
+            <email>dev-pany@163.com</email>
+            <url></url>
+        </developer>
+    </developers>
 
 
     <properties>
@@ -43,6 +76,11 @@
                 <version>${walle.version}</version>
             </dependency>
             <dependency>
+                <groupId>cn.pany.walle</groupId>
+                <artifactId>walle-remoting</artifactId>
+                <version>${walle.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.aspectj</groupId>
                 <artifactId>aspectjweaver</artifactId>
                 <version>${aspectj.version}</version>
@@ -57,28 +95,28 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-                <scope>runtime</scope>
+                <!--<scope>runtime</scope>-->
             </dependency>
             <!-- 代码直接调用log4j会被桥接到slf4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>log4j-over-slf4j</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>runtime</scope>
+                <!--<scope>runtime</scope>-->
             </dependency>
             <!-- 代码直接调用common-logging会被桥接到slf4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>runtime</scope>
+                <!--<scope>runtime</scope>-->
             </dependency>
             <!-- 代码直接调用java.util.logging会被桥接到slf4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jul-to-slf4j</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>runtime</scope>
+                <!--<scope>runtime</scope>-->
             </dependency>
             <!-- LOGGING end -->
             <!-- netty begin -->
@@ -174,16 +212,25 @@
         </dependencies>
     </dependencyManagement>
 
+
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <groupId>org.apache.maven.plugins</groupId>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
+                <version>2.5.1</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <version>2.6</version>
             </plugin>
         </plugins>
     </build>

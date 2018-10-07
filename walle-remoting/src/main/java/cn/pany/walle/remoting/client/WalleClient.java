@@ -1,7 +1,8 @@
 package cn.pany.walle.remoting.client;
 
-import cn.pany.walle.common.*;
+import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.utils.NetUtils;
 import cn.pany.walle.remoting.api.NettyWalleChannelHandler;
 import cn.pany.walle.remoting.api.WalleApp;
@@ -12,10 +13,12 @@ import cn.pany.walle.remoting.protocol.SessionObj;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
+import cn.pany.walle.remoting.registry.WalleRegistry;
 import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -23,73 +26,72 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by pany on 16/9/6.
  */
-@Slf4j
-public class WalleClient extends AbstractClient implements ApplicationContextAware {
 
+public class WalleClient extends AbstractClient {
+    private static final Logger log = LoggerFactory.getLogger(WalleClient.class);
 
     public static final ConcurrentHashMap<String, CountDownLatch> pushFutureMap = new ConcurrentHashMap();
 
     public static final ConcurrentHashMap<String, WalleBizResponse> responseMap = new ConcurrentHashMap();
 
     private Bootstrap bootstrap ;
-    private URL url;
+//    private URL url;
     private volatile Channel channel; // volatile, please copy reference to use
 
     public SessionObj sessionObj = new SessionObj();
 
-//    private Map<String, Object> handlerMap = new HashMap<String, Object>(); // 存放接口名与服务对象之间的映射关系
-//    public static List<SessionObj> sessionObjList = new ArrayList<SessionObj>();
-//    ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
-
     private WalleApp walleApp;
-    List<String> interfaceList;
+    List<InterfaceDetail> interfaceList;
     Map<String,WalleClient> interfaceMap=new HashMap<>();
+    private WalleRegistry walleRegistry;
 
-    public WalleClient(WalleApp walleApp,URL url) throws RemotingException {
-        super(url);
-        this.walleApp=walleApp;
-    }
-    public WalleClient(WalleApp walleApp,URL url,List<String> interfaceList) throws RemotingException {
+//    public WalleClient(WalleApp walleApp,URL url) throws RemotingException {
+//        super(url);
+//        sessionObj.setRemoteIP(url.getIp());
+//        sessionObj.setPort(url.getPort());
+//        sessionObj.setChannel(channel);
+//        this.walleApp=walleApp;
+//    }
+    public WalleClient(WalleApp walleApp,URL url,List<InterfaceDetail> interfaceList, WalleRegistry walleRegistry) throws RemotingException {
         super(url);
         this.walleApp=walleApp;
         this.interfaceList = interfaceList;
-        for(String interfaceDetail : interfaceList){
-            interfaceMap.put(interfaceDetail,this);
+        this.walleRegistry=walleRegistry;
+        sessionObj.setRemoteIP(url.getIp());
+        sessionObj.setPort(url.getPort());
+        sessionObj.setChannel(channel);
+        for(InterfaceDetail interfaceDetail : interfaceList){
+            interfaceMap.put(interfaceDetail.getClassName(),this);
         }
     }
 
-    //    @Resource
-//    private ServiceDiscovery serviceDiscovery;
 
-
-    @Override
-    public void setApplicationContext(ApplicationContext ctx) throws BeansException {
-
-    }
     @Override
     public void doOpen() {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
-            io.netty.channel.ChannelHandler handler = new ChannelInitializer<SocketChannel>() {
+            ChannelHandler handler = new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel channel) throws Exception {
-                    channel.pipeline().addLast(new WalleMessageDecoder(1024 * 1024, 4, 4))
-                            .addLast("MessageEncoder", new WalleMessageEncoder())
-                            .addLast("readTimeoutHandler", new ReadTimeoutHandler(100));
+                    channel.pipeline().addLast("WalleMessageDecoder",new WalleMessageDecoder(1024 * 1024, 4, 4))
+                            .addLast("WallesMessageEncoder", new WalleMessageEncoder())
+                            .addLast("ReadTimeoutHandler", new ReadTimeoutHandler(50))
 //                                    .addLast("LoginAuthHandler", new LoginAuthReqHandler())
-//                                    .addLast("HeartBeatHandler", new HeartBeatReqHandler())
-//                                    .addLast("BizReqHandler", new BizReqHandler());
+                                    .addLast("HeartBeatHandler", new HeartBeatReqHandler())
+                                    .addLast("WalleClientHandler", new WalleClientHandler());
                 }
             };
             bootstrap = new Bootstrap();
@@ -97,6 +99,7 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
                     .handler(handler)
                     .option(ChannelOption.SO_KEEPALIVE, true);
 
+            log.info("WalleClient doOpen success!address is:[{}]",getUrl().getAddress());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,7 +113,7 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
     @Override
     protected void doConnect() throws Throwable {
         long start = System.currentTimeMillis();
-        ChannelFuture future = bootstrap.connect(url.getHost(), url.getPort());
+        ChannelFuture future = bootstrap.connect(getUrl().getHost(), getUrl().getPort());
         try {
             boolean ret = future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
 
@@ -142,16 +145,13 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
                         }
                     } else {
                         WalleClient.this.channel = newChannel;
-                        //获取接口列表 todo
-
-
                     }
                 }
             } else if (future.cause() != null) {
-                throw new RemotingException(this, "client(url: " + getUrl() + ") failed to connect to server "
+                throw new RemotingException(this, "walle client failed to connect to server "
                         + getRemoteAddress() + ", error message is:" + future.cause().getMessage(), future.cause());
             } else {
-                throw new RemotingException(this, "client(url: " + getUrl() + ") failed to connect to server "
+                throw new RemotingException(this, "walle client failed to connect to server "
                         + getRemoteAddress()  + "ms (elapsed: " + (System.currentTimeMillis() - start) + "ms) from netty client "
                         + NetUtils.getLocalHost() );
             }
@@ -206,20 +206,10 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
         if (!isConnected()) {
             connect();
         }
-
-//        long random = (new Date().getTime()) % sessionObjList.size();
-//        SessionObj sessionObj = sessionObjList.get((int) random);
         ChannelFuture channelFuture = sessionObj.getChannel().writeAndFlush(request);
 
         //todo 这里强转可能会失败
         String requestId = ((WalleBizRequest) request.getBody()).getRequestId();
-
-//        try {
-//            channelFuture.await(NettyConstant.DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-//        } catch (InterruptedException e) {
-//            log.error("requestId [{}] is time out",requestId,e);
-//            return null;
-//        }
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
         pushFutureMap.putIfAbsent(requestId, countDownLatch);
@@ -236,15 +226,13 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
                 return response;
             }
         } catch (InterruptedException e) {
-            log.error("requestId [{}] is time out",requestId,e);
+            log.error("requestId [{"+requestId+"}] is time out",e);
             return null;
         }
     }
 
 
     public static void received(String requestId, WalleBizResponse walleBizResponse) {
-
-
         CountDownLatch countDownLatch = pushFutureMap.get(requestId);
         if(countDownLatch!=null){
             countDownLatch.countDown();
@@ -265,11 +253,11 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
         this.walleApp = walleApp;
     }
 
-    public List<String> getInterfaceList() {
+    public List<InterfaceDetail> getInterfaceList() {
         return interfaceList;
     }
 
-    public void setInterfaceList(List<String> interfaceList) {
+    public void setInterfaceList(List<InterfaceDetail> interfaceList) {
         this.interfaceList = interfaceList;
     }
 
@@ -281,16 +269,40 @@ public class WalleClient extends AbstractClient implements ApplicationContextAwa
         this.interfaceMap = interfaceMap;
     }
 
-    @Override
-    public URL getUrl() {
-        return url;
-    }
-
-    public void setUrl(URL url) {
-        this.url = url;
-    }
-
     public void setChannel(Channel channel) {
-        this.channel = channel;
+        this.channel=channel;
+        if(sessionObj!=null){
+            sessionObj.setChannel(channel);
+        }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null) return false;
+
+//        if(o instanceof String){
+//            return getUrl().getAddress().equals((String)o);
+//        }
+        if (getClass() != o.getClass()) return false;
+        if(o instanceof WalleClient){
+            WalleClient that = (WalleClient) o;
+            if(getUrl() == null || that.getUrl()==null ||that.getUrl().getAddress()==null||getUrl().getAddress()==null){
+                return false;
+            }
+
+            return getUrl().getAddress().equals(that.getUrl().getAddress());
+        }
+
+        return false;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return getUrl().getAddress().hashCode();
+    }
+
+
 }

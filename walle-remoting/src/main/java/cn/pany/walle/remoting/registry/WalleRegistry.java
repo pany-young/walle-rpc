@@ -9,6 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.apache.curator.framework.state.ConnectionState;
@@ -17,6 +21,8 @@ import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
@@ -27,9 +33,8 @@ import java.util.Map;
 /**
  * Created by pany on 16/8/25.l
  */
-@Slf4j
 public class WalleRegistry {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(WalleRegistry.class);
+    private static final Logger log = LoggerFactory.getLogger(WalleRegistry.class);
 
     //    private CountDownLatch latch = new CountDownLatch(1);
     public final static String ZK_SPLIT = "/";
@@ -105,6 +110,9 @@ public class WalleRegistry {
             };
 
             register().getConnectionStateListenable().addListener(connectionStateListener);
+
+
+
         } catch (Exception e) {
             log.error("", e);
         }
@@ -136,12 +144,15 @@ public class WalleRegistry {
     public void setData(String path, String data) throws Exception {
         if (data != null) {
             setDataNode(path, data);
-
         }
     }
 
-    public List<String> getData(String path) throws Exception {
-        return register().getChildren().forPath("/" + path);
+    public byte[] getData(String path) throws Exception {
+        return register().getData().forPath(path);
+    }
+
+    public List<String> getChildrenList(String path) throws Exception {
+        return register().getChildren().forPath(path);
     }
 
     public String getRegistryAddress() {

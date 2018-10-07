@@ -40,51 +40,9 @@ public class ExecutorUtil {
         return false;
     }
 
-    public static void gracefulShutdown(Executor executor, int timeout) {
-        if (!(executor instanceof ExecutorService) || isShutdown(executor)) {
-            return;
-        }
-        final ExecutorService es = (ExecutorService) executor;
-        try {
-            es.shutdown(); // Disable new tasks from being submitted
-        } catch (SecurityException ex2) {
-            return;
-        } catch (NullPointerException ex2) {
-            return;
-        }
-        try {
-            if (!es.awaitTermination(timeout, TimeUnit.MILLISECONDS)) {
-                es.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            es.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-        if (!isShutdown(es)) {
-            newThreadToCloseExecutor(es);
-        }
-    }
-
-    public static void shutdownNow(Executor executor, final int timeout) {
-        if (!(executor instanceof ExecutorService) || isShutdown(executor)) {
-            return;
-        }
-        final ExecutorService es = (ExecutorService) executor;
-        try {
-            es.shutdownNow();
-        } catch (SecurityException ex2) {
-            return;
-        } catch (NullPointerException ex2) {
-            return;
-        }
-        try {
-            es.awaitTermination(timeout, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-        if (!isShutdown(es)) {
-            newThreadToCloseExecutor(es);
-        }
+    public static ExecutorService getSineleThreadExecutor(){
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        return executorService;
     }
 
     private static void newThreadToCloseExecutor(final ExecutorService es) {
