@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Service() // 表明可被 Spring 扫描
-public @interface WalleService {
+public @interface WalleRpcService {
 
     Class<?> value();
     String appName();

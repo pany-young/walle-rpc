@@ -76,7 +76,7 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
 //        log.info("Register zk watcher begin!");
         PathChildrenCache childrenCache = null;
         try {
-            childrenCache = new PathChildrenCache(registry.register(), WalleRegistry.ZK_SPLIT + getObject().getAppName(), true);
+            childrenCache = new PathChildrenCache(registry.register(), WalleRegistry.ZK_SPLIT + getObject().getAppName()+WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT, true);
 
             PathChildrenCacheListener childrenCacheListener = new PathChildrenCacheListener() {
                 @Override

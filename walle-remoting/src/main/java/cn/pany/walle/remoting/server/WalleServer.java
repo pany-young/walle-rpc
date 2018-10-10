@@ -2,31 +2,23 @@ package cn.pany.walle.remoting.server;
 
 
 import cn.pany.walle.common.ServerState;
-import cn.pany.walle.common.annotation.WalleService;
+import cn.pany.walle.common.annotation.WalleRpcService;
 import cn.pany.walle.common.model.InterfaceDetail;
-import cn.pany.walle.common.model.ServerInfo;
 import cn.pany.walle.common.utils.ExecutorUtil;
-import cn.pany.walle.common.utils.NamedThreadFactory;
 import cn.pany.walle.remoting.codec.WalleMessageDecoder;
 import cn.pany.walle.remoting.codec.WalleMessageEncoder;
 import cn.pany.walle.remoting.registry.WalleRegistry;
-import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import javax.swing.text.html.parser.Entity;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -34,10 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author pany
@@ -74,13 +62,13 @@ public class WalleServer implements ApplicationContextAware {
                 bind();
             }
         });
-        Map<String, Object> serviceBeanMap = ctx.getBeansWithAnnotation(WalleService.class); // 获取所有带有 WalleService 注解的 Spring Bean
+        Map<String, Object> serviceBeanMap = ctx.getBeansWithAnnotation(WalleRpcService.class); // 获取所有带有 WalleRpcService 注解的 Spring Bean
         if (!serviceBeanMap.isEmpty()) {
             Map<String, List<InterfaceDetail>> tempAppMap = new HashMap<>();
             for (Object serviceBean : serviceBeanMap.values()) {
-                String interfaceName = serviceBean.getClass().getAnnotation(WalleService.class).value().getName();
-                String version = serviceBean.getClass().getAnnotation(WalleService.class).version();
-                String appName = serviceBean.getClass().getAnnotation(WalleService.class).appName();
+                String interfaceName = serviceBean.getClass().getAnnotation(WalleRpcService.class).value().getName();
+                String version = serviceBean.getClass().getAnnotation(WalleRpcService.class).version();
+                String appName = serviceBean.getClass().getAnnotation(WalleRpcService.class).appName();
 
                 WalleServerHandler.handlerMap.put(interfaceName, serviceBean);
 

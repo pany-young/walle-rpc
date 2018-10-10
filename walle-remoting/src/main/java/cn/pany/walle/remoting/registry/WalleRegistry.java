@@ -1,32 +1,19 @@
 package cn.pany.walle.remoting.registry;
 
-import cn.pany.walle.common.annotation.WalleService;
 import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
 import com.alibaba.fastjson.JSON;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +25,7 @@ public class WalleRegistry {
 
     //    private CountDownLatch latch = new CountDownLatch(1);
     public final static String ZK_SPLIT = "/";
+    public final static String WALLE_SERVER_DEFULT = "server";
 //    public static String INIT_PATH = "/cn_pany/walle";
 
     private CuratorFramework client;
@@ -95,7 +83,7 @@ public class WalleRegistry {
                                 continue;
                             }
                             String appName = tempApp.getKey();
-                            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + serverAddress;
+                            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT + WalleRegistry.ZK_SPLIT + serverAddress;
 
                             ServerInfo serverInfo = new ServerInfo();
                             serverInfo.setInterfaceDetailList(interfaceList);
