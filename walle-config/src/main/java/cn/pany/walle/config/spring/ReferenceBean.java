@@ -2,6 +2,7 @@ package cn.pany.walle.config.spring;
 
 import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.remoting.api.WalleApp;
+import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
@@ -73,7 +74,11 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         Map<String, String> map = new HashMap();
 
         invokerUrl =  interfaceName + version;
-        invoker = new WalleInvoker<>(interfaceClass, invokerUrl);
+        invoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
+        if(invoker == null){
+            invoker = new WalleInvoker<>(interfaceClass, invokerUrl);
+        }
+
 //        ValyRpcProxy valyRpcProxy = (ValyRpcProxy) this.applicationContext.getBean("valyRpcProxy");
 //        Object consumerProxy = valyRpcProxy.create(intefaceClazz);
         map.put(NettyConstant.INTERFACE_CLASS_KEY, interfaceName);

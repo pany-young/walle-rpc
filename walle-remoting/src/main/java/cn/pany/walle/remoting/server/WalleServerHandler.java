@@ -46,7 +46,7 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
                 case SERVICE_REQ:
 //                    processRequestCommand(ctx, cmd);
                     LOG.info("biz message:"+msg.toString());
-                    LOG.info("biz message:"+msg.getBody().toString());
+//                    LOG.info("biz message:"+msg.getBody().toString());
                     threadPoolExecutor.execute(new WalleBizTask(ctx,cmd));
                     break;
                 case SERVICE_RESP:
@@ -73,17 +73,19 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
             String className = request.getClassName();
             Object serviceBean = handlerMap.get(className);
 
-            Class<?> serviceClass = serviceBean.getClass();
-            String methodName = request.getMethodName();
-            Class<?>[] parameterTypes = request.getParameterTypes();
-            Object[] parameters = request.getParameters();
+            if(serviceBean!=null){
+                Class<?> serviceClass = serviceBean.getClass();
+                String methodName = request.getMethodName();
+                Class<?>[] parameterTypes = request.getParameterTypes();
+                Object[] parameters = request.getParameters();
 
-
-            FastClass serviceFastClass = FastClass.create(serviceClass);
-            FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
-
-            Object result = serviceFastMethod.invoke(serviceBean, parameters);
-            return result;
+                FastClass serviceFastClass = FastClass.create(serviceClass);
+                FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
+                Object result = serviceFastMethod.invoke(serviceBean, parameters);
+                return result;
+            }else {
+                return null;
+            }
         }
 
         @Override

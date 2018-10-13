@@ -25,6 +25,7 @@ public class WalleApp {
     private WalleRegistry walleRegistry;
     private  AppState appState=AppState.INIT;
     private  String version;
+    private String appPath;
     enum AppState{
         INIT(1),INITED(2),CLOSE(9);
 
@@ -55,14 +56,15 @@ public class WalleApp {
             if (walleRegistry.isRegister()) {
                 walleRegistry.register();
             }
-            List<String> serverList = walleRegistry.getChildrenList(WalleRegistry.ZK_SPLIT + appName);
+            appPath=WalleRegistry.ZK_SPLIT + appName +WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT ;
+            List<String> serverList = walleRegistry.getChildrenList(appPath);
 
             //ip:port#version@protocol
             for (String serverDetail : serverList) {
                 URL url = UrlUtils.parseURL(serverDetail, null);
 
                 byte[] interfaceListByte = walleRegistry.
-                getData(WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + serverDetail);
+                getData(appPath + WalleRegistry.ZK_SPLIT + serverDetail);
                 List<InterfaceDetail> interfaceList =
                         JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailList();
 

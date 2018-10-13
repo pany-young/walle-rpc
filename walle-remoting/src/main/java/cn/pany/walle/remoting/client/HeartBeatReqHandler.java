@@ -9,6 +9,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -24,17 +26,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
 
+    private static final Logger log = LoggerFactory.getLogger(HeartBeatReqHandler.class);
+
+
     private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
-//    private volatile ScheduledFuture<?> heartBeat;
+    //    private volatile ScheduledFuture<?> heartBeat;
     private volatile HeartBeatTask heartBeatTask;
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         ctx.writeAndFlush(buildHeatBeat());
-        heartBeatTask=new HeartBeatReqHandler.HeartBeatTask(ctx);
+        heartBeatTask = new HeartBeatReqHandler.HeartBeatTask(ctx);
         ctx.executor().schedule(heartBeatTask,
-                 20000, TimeUnit.MILLISECONDS);
+                20000, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleWithFixedDelay(new HeartBeatReqHandler.HeartBeatTask(ctx),
 //                0, 20000, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleAtFixedRate(new HeartBeatReqHandler.HeartBeatTask(ctx),
@@ -79,20 +84,23 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
 //            heartBeat=null;
 //        }
     }
+
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         String ip = address.getAddress().getHostAddress();
         log.info("HeartBeatReqHandler 断开:" + ip + ":" + address.getPort());
     }
 
-    private class HeartBeatTask implements Runnable{
+    private class HeartBeatTask implements Runnable {
         private final ChannelHandlerContext ctx;
-        public HeartBeatTask(final ChannelHandlerContext ctx){
-            this.ctx =ctx;
+
+        public HeartBeatTask(final ChannelHandlerContext ctx) {
+            this.ctx = ctx;
         }
+
         @Override
         public void run() {
-            WalleMessage heatBeat  = buildHeatBeat();
+            WalleMessage heatBeat = buildHeatBeat();
 //			System.out.println("Client send heart beat message to server :-->"+heatBeat);
             ctx.writeAndFlush(heatBeat);
         }

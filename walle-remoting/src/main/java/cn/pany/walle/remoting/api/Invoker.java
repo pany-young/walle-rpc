@@ -1,4 +1,4 @@
-package cn.pany.walle.config.spring;
+package cn.pany.walle.remoting.api;
 
 /**
  * Created by pany on 17/12/11.

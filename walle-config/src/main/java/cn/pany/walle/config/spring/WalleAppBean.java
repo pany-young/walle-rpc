@@ -1,10 +1,11 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
 import cn.pany.walle.common.utils.UrlUtils;
 import cn.pany.walle.remoting.api.WalleApp;
+import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.registry.WalleRegistry;
 import com.alibaba.fastjson.JSON;
@@ -97,6 +98,15 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
                             if(!walleApp.getWalleClientSet().contains(walleClient)){
                                 walleClient.doOpen();
                                 walleApp.getWalleClientSet().add(walleClient);
+                                for(InterfaceDetail interfaceDetail : serverInfo.getInterfaceDetailList()){
+                                    String invokerUrl = interfaceDetail.getClassName()+interfaceDetail.getVersion();
+                                    WalleInvoker walleInvoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
+                                    if(walleInvoker==null){
+                                        walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(),invokerUrl);
+                                    }
+
+                                    walleInvoker.addToClients(walleClient);
+                                }
                             }
 //                            boolean skip=false;
 //                            for(WalleClient walleClient :walleApp.getWalleClientSet()){

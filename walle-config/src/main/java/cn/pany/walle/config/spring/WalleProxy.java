@@ -1,16 +1,13 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.protocol.MessageType;
-import cn.pany.walle.remoting.client.WalleClient;
+import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.protocol.Header;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;

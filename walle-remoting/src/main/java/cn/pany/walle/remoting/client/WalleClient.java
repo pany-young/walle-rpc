@@ -14,11 +14,13 @@ import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
 import cn.pany.walle.remoting.registry.WalleRegistry;
+import cn.pany.walle.remoting.task.CheckTimeoutResponseTask;
 import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -29,11 +31,15 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,6 +53,9 @@ public class WalleClient extends AbstractClient {
 
     public static final ConcurrentHashMap<String, WalleBizResponse> responseMap = new ConcurrentHashMap();
 
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+
     private Bootstrap bootstrap ;
 //    private URL url;
     private volatile Channel channel; // volatile, please copy reference to use
@@ -57,6 +66,14 @@ public class WalleClient extends AbstractClient {
     List<InterfaceDetail> interfaceList;
     Map<String,WalleClient> interfaceMap=new HashMap<>();
     private WalleRegistry walleRegistry;
+
+    static {
+        Long timeout= NettyConstant.DEFAULT_TIMEOUT;
+        log.info("CheckTimeoutResponseTask start");
+        scheduledExecutorService.scheduleWithFixedDelay(new CheckTimeoutResponseTask(),0,timeout,TimeUnit.SECONDS);
+    }
+
+//    private Set<WalleInvoker> walleInvokerSet=new HashSet<>();
 
 //    public WalleClient(WalleApp walleApp,URL url) throws RemotingException {
 //        super(url);
@@ -170,8 +187,6 @@ public class WalleClient extends AbstractClient {
 
     @Override
     protected void doDisConnect() throws Throwable {
-        //todo 断开连接处理
-        //1.是否断开重连，重连次数
 
     }
 
@@ -206,7 +221,6 @@ public class WalleClient extends AbstractClient {
         if (!isConnected()) {
             connect();
         }
-        ChannelFuture channelFuture = sessionObj.getChannel().writeAndFlush(request);
 
         //todo 这里强转可能会失败
         String requestId = ((WalleBizRequest) request.getBody()).getRequestId();
@@ -215,7 +229,10 @@ public class WalleClient extends AbstractClient {
         pushFutureMap.putIfAbsent(requestId, countDownLatch);
 
         try {
-            if(countDownLatch.await(NettyConstant.DEFAULT_TIMEOUT, TimeUnit.SECONDS)){
+            getChannel().writeAndFlush(request);
+//            if(countDownLatch.await(NettyConstant.DEFAULT_TIMEOUT, TimeUnit.SECONDS)){
+            Long timeout= NettyConstant.DEFAULT_TIMEOUT;
+            if(countDownLatch.await(timeout, TimeUnit.SECONDS)){
                 WalleBizResponse response = responseMap.get(requestId);
                 responseMap.remove(requestId);
                 return response;
@@ -223,10 +240,14 @@ public class WalleClient extends AbstractClient {
                 pushFutureMap.remove(requestId);
                 WalleBizResponse response = responseMap.get(requestId);
                 responseMap.remove(requestId);
+
                 return response;
             }
         } catch (InterruptedException e) {
             log.error("requestId [{"+requestId+"}] is time out",e);
+            return null;
+        }catch (Exception e){
+            log.error("requestId [{"+requestId+"}] is error",e);
             return null;
         }
     }
@@ -237,6 +258,8 @@ public class WalleClient extends AbstractClient {
         if(countDownLatch!=null){
             countDownLatch.countDown();
             pushFutureMap.remove(requestId);
+            walleBizResponse.setReceiveTime(new Date());
+            walleBizResponse.setTimeOutNum(NettyConstant.DEFAULT_TIMEOUT);
             responseMap.putIfAbsent(requestId, walleBizResponse);
         }else {
             log.info("requestId :[{}] not in pushFutureMap,rep:[{}]",requestId, JSON.toJSONString(walleBizResponse) );
@@ -304,5 +327,8 @@ public class WalleClient extends AbstractClient {
         return getUrl().getAddress().hashCode();
     }
 
+//    public void addInvoker(WalleInvoker walleInvoker){
+//        this.walleInvokerSet.add(walleInvoker);
+//    }
 
 }
