@@ -87,7 +87,7 @@ public final class NettyWalleChannelHandler implements WalleChannelHandler {
 //        try {
 //            ChannelFuture future = channel.writeAndFlush(message);
 //            if (sent) {
-//                timeout = NettyConstant.DEFAULT_TIMEOUT;
+//                timeout = WalleConstant.DEFAULT_TIMEOUT;
 //                success = future.await(timeout);
 //            }
 //            Throwable cause = future.cause();

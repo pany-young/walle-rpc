@@ -1,7 +1,6 @@
 package cn.pany.walle.remoting.server;
 
 
-import cn.pany.walle.common.constants.NettyConstant;
 import cn.pany.walle.common.protocol.MessageType;
 import cn.pany.walle.remoting.protocol.Header;
 import cn.pany.walle.remoting.protocol.LoginBody;

@@ -1,6 +1,6 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.protocol.MessageType;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.protocol.Header;
@@ -25,7 +25,7 @@ public class WalleProxy {
         ClassLoader clazzLoader = Thread.currentThread()
                 .getContextClassLoader();
         try {
-            interfaceClass = Class.forName(map.get(NettyConstant.INTERFACE_CLASS_KEY), false, clazzLoader);
+            interfaceClass = Class.forName(map.get(WalleConstant.INTERFACE_CLASS_KEY), false, clazzLoader);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

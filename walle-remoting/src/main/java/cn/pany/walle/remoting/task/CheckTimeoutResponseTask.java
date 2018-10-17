@@ -15,7 +15,7 @@ public class CheckTimeoutResponseTask implements Runnable{
 
     @Override
     public void run() {
-        log.info("run CheckTimeoutResponseTask");
+        log.debug("run CheckTimeoutResponseTask");
         Date now= new Date();
 //        Long nowTime =System.currentTimeMillis();
         for(Map.Entry<String,WalleBizResponse> entry  :  WalleClient.responseMap.entrySet()){

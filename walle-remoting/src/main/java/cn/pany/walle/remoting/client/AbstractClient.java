@@ -1,26 +1,18 @@
 package cn.pany.walle.remoting.client;
 
 import cn.pany.walle.common.URL;
-import cn.pany.walle.common.constants.NettyConstant;
-import cn.pany.walle.common.utils.ExecutorUtil;
-import cn.pany.walle.common.utils.NamedThreadFactory;
 import cn.pany.walle.common.utils.NetUtils;
+import cn.pany.walle.common.utils.StringUtils;
 import cn.pany.walle.remoting.api.WalleChannel;
 import cn.pany.walle.remoting.exception.RemotingException;
-import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,9 +20,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by pany on 17/12/13.
  */
-@Slf4j
 public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleBizResponse>{
-
+    private static final Logger log = LoggerFactory.getLogger(AbstractClient.class);
     private volatile URL url;
     private final Lock connectLock = new ReentrantLock();
     private final AtomicInteger reconnect_count = new AtomicInteger(0);
@@ -40,7 +31,6 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
 
     public AbstractClient(URL url) throws RemotingException {
 
-       // shutdown_timeout = url.getParameter(Constants.SHUTDOWN_TIMEOUT_KEY, Constants.DEFAULT_SHUTDOWN_TIMEOUT);
         this.url = url;
         try {
             doOpen();

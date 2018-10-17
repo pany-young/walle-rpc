@@ -1,6 +1,6 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
 import cn.pany.walle.common.utils.UrlUtils;
@@ -148,7 +148,7 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
                 }
             };
             childrenCache.getListenable().addListener(childrenCacheListener);
-            log.info("Register zk app watcher path:[{}] successfully!", WalleRegistry.ZK_SPLIT+NettyConstant.NAME_SPACE+WalleRegistry.ZK_SPLIT + getObject().getAppName());
+            log.info("Register zk app watcher path:[{}] successfully!", WalleRegistry.ZK_SPLIT+ WalleConstant.NAME_SPACE+WalleRegistry.ZK_SPLIT + getObject().getAppName());
             childrenCache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
         } catch (Exception e) {
             log.error("",e);

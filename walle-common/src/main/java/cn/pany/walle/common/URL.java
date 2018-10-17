@@ -15,7 +15,6 @@
  */
 package cn.pany.walle.common;
 
-import cn.pany.walle.common.utils.CollectionUtils;
 import cn.pany.walle.common.utils.NetUtils;
 import cn.pany.walle.common.utils.StringUtils;
 import org.slf4j.Logger;

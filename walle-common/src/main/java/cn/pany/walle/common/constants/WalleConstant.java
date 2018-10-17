@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2011 Alibaba Group.
+ * Copyright 2013-2018 Lilinfeng.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.pany.walle.common.utils;
+package cn.pany.walle.common.constants;
 
-/**
- * Helper Class for hold a value.
- *
- * @author william.liangf
- */
-public class Holder<T> {
+public final class WalleConstant {
 
-    private volatile T value;
+    public static final String ZK_REGISTRY_PATH="cn_pany/walle";
 
-    public void set(T value) {
-        this.value = value;
-    }
+    public static final String NAME_SPACE="cn_pany/walle";
 
-    public T get() {
-        return value;
-    }
+    public static final String INTERFACE_CLASS_KEY ="interfaceClass";
 
+    public static final Long DEFAULT_TIMEOUT = 10000L;
 }

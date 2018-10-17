@@ -1,6 +1,6 @@
 package cn.pany.walle.remoting.registry;
 
-import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
 import com.alibaba.fastjson.JSON;
@@ -60,7 +60,7 @@ public class WalleRegistry {
             client = CuratorFrameworkFactory
                     .builder()
                     .connectString(registryAddress)
-                    .namespace(NettyConstant.NAME_SPACE)
+                    .namespace(WalleConstant.NAME_SPACE)
                     .retryPolicy(new RetryNTimes(2000, 20000))
                     .build();
         }

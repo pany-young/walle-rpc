@@ -1,6 +1,6 @@
 package cn.pany.walle.config.spring;
 
-import cn.pany.walle.common.constants.NettyConstant;
+import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
@@ -81,7 +81,7 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
 
 //        ValyRpcProxy valyRpcProxy = (ValyRpcProxy) this.applicationContext.getBean("valyRpcProxy");
 //        Object consumerProxy = valyRpcProxy.create(intefaceClazz);
-        map.put(NettyConstant.INTERFACE_CLASS_KEY, interfaceName);
+        map.put(WalleConstant.INTERFACE_CLASS_KEY, interfaceName);
 
 //        Object consumerProxy = valyProxy.create(map);
         if(ref==null){

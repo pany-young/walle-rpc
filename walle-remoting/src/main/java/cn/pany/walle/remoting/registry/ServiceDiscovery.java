@@ -1,6 +1,6 @@
 //package cn.pany.walle.remoting.registry;
 //
-//import cn.pany.walle.common.constants.NettyConstant;
+//import cn.pany.walle.common.constants.WalleConstant;
 //import lombok.extern.slf4j.Slf4j;
 //import org.apache.curator.framework.CuratorFramework;
 //import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -59,7 +59,7 @@
 //        CuratorFramework client = CuratorFrameworkFactory
 //                .builder()
 //                .connectString(registryAddress)
-//                .namespace(NettyConstant.ZK_REGISTRY_PATH)
+//                .namespace(WalleConstant.ZK_REGISTRY_PATH)
 //                .retryPolicy(new RetryNTimes(2000, 20000))
 //                .build();
 //
