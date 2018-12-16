@@ -17,6 +17,12 @@ package cn.pany.walle.common.utils;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+/**
+ * AtomicPositiveInteger
+ *
+ * @author william.liangf
+ * @author ding.lid
+ */
 public class AtomicPositiveInteger extends Number {
 
     private static final long serialVersionUID = -3038533876489105940L;

@@ -18,19 +18,24 @@ package cn.pany.walle.remoting.api;
 
 import cn.pany.walle.common.URL;
 import cn.pany.walle.remoting.exception.RemotingException;
+import cn.pany.walle.remoting.server.WalleServerHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * NettyWalleChannelHandler.
  *
  * @author pany.yang
  */
-@Slf4j
 public final class NettyWalleChannelHandler implements WalleChannelHandler {
+    private final static Logger log = LoggerFactory.getLogger(NettyWalleChannelHandler.class);
+
 
     private static final ConcurrentMap<Channel, NettyWalleChannelHandler> channelMap = new ConcurrentHashMap<Channel, NettyWalleChannelHandler>();
 

@@ -8,6 +8,8 @@ import cn.pany.walle.remoting.protocol.WalleMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -18,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 1.0
  * @createDate：2015年12月16日 下午3:27:04
  */
-@Slf4j
 public class LoginAuthRespHandler extends ChannelInboundHandlerAdapter {
+    private final static Logger log = LoggerFactory.getLogger(LoginAuthRespHandler.class);
 
     private Map<String, Boolean> nodeCheck = new ConcurrentHashMap<String, Boolean>();
 

@@ -37,17 +37,17 @@ public class WalleInvoker<T> implements Invoker<T> {
         walleInvokerMap.putIfAbsent(invokerUrl, this);
     }
 
+    public WalleInvoker(Class<T> serviceType, String invokerUrl,RouterType routerType) {
+        this.type = serviceType;
+        this.invokerUrl = invokerUrl;
+        this.routerType =routerType;
+        walleInvokerMap.putIfAbsent(invokerUrl, this);
+    }
+
     public WalleBizResponse send(WalleMessage walleMessage) {
-//                RpcInvocation inv = (RpcInvocation) invocation;
-//        final String methodName = RpcUtils.getMethodName(invocation);
-
         if (walleMessage.getBody() instanceof WalleBizRequest) {
-            WalleBizRequest walleBizRequest = (WalleBizRequest) walleMessage.getBody();
-
-            final String methodName = walleBizRequest.getMethodName();
-
-//            Map<String,Object> map =new HashMap();
-//            map.put(ConsistenthashLoadbalance.REQUEST_ID,walleBizRequest.getRequestId());
+//            WalleBizRequest walleBizRequest = (WalleBizRequest) walleMessage.getBody();
+//            final String methodName = walleBizRequest.getMethodName();
 
             WalleClient currentClient = selectorClient(null);
 
@@ -70,23 +70,6 @@ public class WalleInvoker<T> implements Invoker<T> {
         if (clients.size() == 1) {
             currentClient = clients.get(0);
         } else {
-//            int index =0;
-//            switch (routerType) {
-//                case RANDOM_LOADBALANCE:
-//                    currentClient = RandomLoadBalance.getRandomLoadBalance().selector(clients,null);
-//                    break;
-//                case ROUNDROBIN_LOADBALANCE:
-//                    currentClient = RoundrobinLoadBalance.getRoundrobinLoadBalance().selector(clients,null);
-//                    break;
-//                case LEASTACTIVE_LOADBALANCE :
-//                    break;
-//                case CONSISTENTHASH_LOADBALANCE :
-//                    Map<String,Object> map =new HashMap();
-//                    map.put(ConsistenthashLoadbalance.REQUEST_ID,requestId);
-//                    currentClient = ConsistenthashLoadbalance.getConsistenthashLoadbalance().selector(clients,map);
-//                    break;
-//            }
-
             if (AbstractLoadBalance.getLoadBanlance(routerType) != null) {
                 AbstractLoadBalance.getLoadBanlance(routerType).selector(clients, map);
             }

@@ -18,11 +18,7 @@ package cn.pany.walle.common.utils;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * InternalThreadFactory.
- *
- * @author qian.lei
- */
+
 
 public class NamedThreadFactory implements ThreadFactory {
     private static final AtomicInteger POOL_SEQ = new AtomicInteger(1);

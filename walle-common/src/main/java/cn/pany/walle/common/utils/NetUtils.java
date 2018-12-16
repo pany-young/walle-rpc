@@ -26,11 +26,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
 
-/**
- * IP and Port Helper for RPC,
- *
- * @author shawn.qianx
- */
+
+
 
 public class NetUtils {
 

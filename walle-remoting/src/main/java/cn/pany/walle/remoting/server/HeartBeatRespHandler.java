@@ -7,6 +7,8 @@ import cn.pany.walle.remoting.protocol.WalleMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** 
  * @author pany
@@ -14,8 +16,8 @@ import lombok.extern.slf4j.Slf4j;
  * @createDate：2015年12月16日 下午4:07:41 
  * 
  */
-@Slf4j
 public class HeartBeatRespHandler extends ChannelInboundHandlerAdapter {
+	private final static Logger log = LoggerFactory.getLogger(LoginAuthRespHandler.class);
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg)

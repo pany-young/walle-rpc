@@ -21,9 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 
-/**
- * @author chao.liuc
- */
 public class ExecutorUtil {
     private static final Logger logger = LoggerFactory.getLogger(ExecutorUtil.class);
     private static final ThreadPoolExecutor shutdownExecutor = new ThreadPoolExecutor(0, 1,

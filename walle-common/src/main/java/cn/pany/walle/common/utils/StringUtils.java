@@ -24,11 +24,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * StringUtils
- *
- * @author qian.lei
- */
 
 public final class StringUtils {
 

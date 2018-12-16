@@ -92,7 +92,6 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
 //                            data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT));
                             lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
                             log.info("CHILD_ADDED : " + data.getPath() + "  数据:" + new String(data.getData()));
-                            log.info("CHILD_ADDED : " + data.getPath() + "  last path:" + lastPath);
 
                             WalleClient walleClient=new WalleClient(getObject(), UrlUtils.parseURL(lastPath,null),serverInfo.getInterfaceDetailList(),registry);
                             if(!walleApp.getWalleClientSet().contains(walleClient)){
@@ -105,22 +104,11 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
                                         walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(),invokerUrl);
                                     }
 
-                                    walleInvoker.addToClients(walleClient);
+                                    if(!walleInvoker.getClients().contains(walleClient)){
+                                        walleInvoker.addToClients(walleClient);
+                                    }
                                 }
                             }
-//                            boolean skip=false;
-//                            for(WalleClient walleClient :walleApp.getWalleClientSet()){
-//                                if( walleClient.getUrl().getAddress().equals(lastPath)){
-//                                    skip=true;
-//                                   break;
-//                                }
-//                            }
-//                            if(!skip){
-//                                WalleClient walleClient=new WalleClient(getObject(), UrlUtils.parseURL(lastPath,null),serverInfo.getInterfaceDetailList(),registry);
-//                                walleClient.doOpen();
-//                                walleApp.getWalleClientSet().add(walleClient);
-//                                log.info("WalleClientSet add client and connet: " + lastPath);
-//                            }
 
                             break;
                         case CHILD_REMOVED:

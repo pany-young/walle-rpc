@@ -1,7 +1,7 @@
 package cn.pany.walle.remoting.server;
 
 
-import cn.pany.walle.common.ServerState;
+import cn.pany.walle.common.enums.ServerState;
 import cn.pany.walle.common.annotation.WalleRpcService;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.utils.ExecutorUtil;
