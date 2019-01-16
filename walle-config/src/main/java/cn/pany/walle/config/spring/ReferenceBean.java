@@ -108,7 +108,10 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
                 //从client里面匹配接口
                 for (WalleClient client : walleClientSet) {
                     //class#method:version
-                    invoker.addToClients(client.getInterfaceMap().get(invokerUrl));
+                    WalleClient walleClient= client.getInterfaceMap().get(invokerUrl);
+                    if(walleClient == null){
+                        invoker.addToClients(walleClient);
+                    }
                 }
             }
 
