@@ -3,6 +3,7 @@ package cn.pany.walle.config.spring;
 import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
+import cn.pany.walle.common.utils.InvokerUtil;
 import cn.pany.walle.common.utils.UrlUtils;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
@@ -98,7 +99,7 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
                                 walleClient.doOpen();
                                 walleApp.getWalleClientSet().add(walleClient);
                                 for(InterfaceDetail interfaceDetail : serverInfo.getInterfaceDetailList()){
-                                    String invokerUrl = interfaceDetail.getClassName()+interfaceDetail.getVersion();
+                                    String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(),null,interfaceDetail.getVersion());;
                                     WalleInvoker walleInvoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
                                     if(walleInvoker==null){
                                         walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(),invokerUrl);

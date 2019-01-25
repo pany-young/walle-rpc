@@ -81,7 +81,8 @@ public class WalleClient extends AbstractClient {
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
         for(InterfaceDetail interfaceDetail : interfaceList){
-            interfaceMap.put(interfaceDetail.getClassName(),this);
+            String interfaceUrl =  interfaceDetail.getClassName() +":"+ interfaceDetail.getVersion();
+            interfaceMap.put(interfaceUrl,this);
         }
     }
 
@@ -286,6 +287,8 @@ public class WalleClient extends AbstractClient {
             if(getUrl() == null || that.getUrl()==null ||that.getUrl().getAddress()==null||getUrl().getAddress()==null){
                 return false;
             }
+            log.info("this addressis :"+getUrl().getAddress());
+            log.info("that addressis :"+that.getUrl().getAddress());
 
             return getUrl().getAddress().equals(that.getUrl().getAddress());
         }

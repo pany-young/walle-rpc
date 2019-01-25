@@ -72,27 +72,15 @@ public class WalleRegistry {
         return client;
     }
 
-    public void addServiceListener(Map<String, List<InterfaceDetail>> tempAppMap, String serverAddress) throws Exception {
+    public void addServiceListener(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
         try {
+            setServerInfo(serverAppMap,serverAddress);
             ConnectionStateListener connectionStateListener = new ConnectionStateListener() {
                 public void stateChanged(CuratorFramework client, ConnectionState newState) {
-                    if (ConnectionState.CONNECTED == newState || ConnectionState.RECONNECTED == newState) {
-                        for (Map.Entry<String, List<InterfaceDetail>> tempApp : tempAppMap.entrySet()) {
-                            List<InterfaceDetail> interfaceList = tempApp.getValue();
-                            if (interfaceList == null || interfaceList.isEmpty()) {
-                                continue;
-                            }
-                            String appName = tempApp.getKey();
-                            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT + WalleRegistry.ZK_SPLIT + serverAddress;
-
-                            ServerInfo serverInfo = new ServerInfo();
-                            serverInfo.setInterfaceDetailList(interfaceList);
-                            try {
-                                setData(appPath, JSON.toJSONString(serverInfo));
-                            } catch (Exception e) {
-                                log.error("", e);
-                            }
-                        }
+                    if (ConnectionState.RECONNECTED == newState) {
+                        setServerInfo(serverAppMap,serverAddress);
+                    }else if (ConnectionState.CONNECTED == newState) {
+                        setServerInfo(serverAppMap,serverAddress);
                     }
                 }
             };
@@ -100,19 +88,41 @@ public class WalleRegistry {
             register().getConnectionStateListenable().addListener(connectionStateListener);
 
 
-
         } catch (Exception e) {
             log.error("", e);
         }
     }
 
-//    private void createInitNode(CuratorFramework client) throws Exception {
-//        client.create().creatingParentContainersIfNeeded()
-//                .withMode(CreateMode.PERSISTENT)//存储类型（临时的还是持久的）
-//                .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)//访问权限
-//                .forPath(INIT_PATH);//创建的路径
-//
-//    }
+    private void setServerInfo(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress){
+        for (Map.Entry<String, List<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
+            List<InterfaceDetail> interfaceList = tempApp.getValue();
+            if (interfaceList == null || interfaceList.isEmpty()) {
+                continue;
+            }
+            String appName = tempApp.getKey();
+            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT + WalleRegistry.ZK_SPLIT + serverAddress;
+
+            ServerInfo serverInfo = new ServerInfo();
+            serverInfo.setInterfaceDetailList(interfaceList);
+            try {
+                setData(appPath, JSON.toJSONString(serverInfo));
+            } catch (Exception e) {
+                log.error("", e);
+            }
+        }
+    }
+    public void removeServiceListener(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
+        for (Map.Entry<String, List<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
+            List<InterfaceDetail> interfaceList = tempApp.getValue();
+            if (interfaceList == null || interfaceList.isEmpty()) {
+                continue;
+            }
+            String appName = tempApp.getKey();
+            String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT + WalleRegistry.ZK_SPLIT + serverAddress;
+
+            register().delete().forPath(appPath);
+        }
+    }
 
     public void createPersistentNode(String path) throws Exception {
         register().create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).

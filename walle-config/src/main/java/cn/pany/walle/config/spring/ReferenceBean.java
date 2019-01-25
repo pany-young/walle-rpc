@@ -1,9 +1,11 @@
 package cn.pany.walle.config.spring;
 
 import cn.pany.walle.common.constants.WalleConstant;
+import cn.pany.walle.common.utils.InvokerUtil;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
@@ -72,8 +74,12 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         }
 
         Map<String, String> map = new HashMap();
+        if(StringUtils.isBlank(version)){
+            version= "1.0.0";
+        }
+        invokerUrl= InvokerUtil.formatInvokerUrl(interfaceName,null,version);;
 
-        invokerUrl =  interfaceName + version;
+//        invokerUrl =  interfaceName +":"+ version;
         invoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
         if(invoker == null){
             invoker = new WalleInvoker<>(interfaceClass, invokerUrl);
@@ -100,16 +106,16 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         if(walleApp.init()){
             Set<WalleClient> walleClientSet = walleApp.getWalleClientSet();
 
-            if (walleClientSet == null || walleClientSet.size() == 0) {
-                throw new IllegalStateException("No such any client on app:" + walleApp.getAppName() + ".");
-            }
+//            if (walleClientSet == null || walleClientSet.size() == 0) {
+//                throw new IllegalStateException("No such any client on app:" + walleApp.getAppName() + ".");
+//            }
 
-            if (walleClientSet != null && walleClientSet.size() > 0) {
+            if (walleClientSet != null  ) {
                 //从client里面匹配接口
                 for (WalleClient client : walleClientSet) {
                     //class#method:version
                     WalleClient walleClient= client.getInterfaceMap().get(invokerUrl);
-                    if(walleClient == null){
+                    if(walleClient != null){
                         invoker.addToClients(walleClient);
                     }
                 }
