@@ -9,6 +9,7 @@ public class WalleBizRequest implements Serializable {
     private String requestId;
     private String className;
     private String methodName;
+    private String version;
     private Class<?>[] parameterTypes;
     private Object[] parameters;
 
@@ -53,5 +54,11 @@ public class WalleBizRequest implements Serializable {
         this.parameters = parameters;
     }
 
+    public String getVersion() {
+        return version;
+    }
 
+    public void setVersion(String version) {
+        this.version = version;
+    }
 }

@@ -88,6 +88,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         String ip = address.getAddress().getHostAddress();
+        //todo  清理invoker里的链接
         log.info("HeartBeatReqHandler 断开:" + ip + ":" + address.getPort());
     }
 

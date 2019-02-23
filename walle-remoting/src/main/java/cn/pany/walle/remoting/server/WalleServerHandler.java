@@ -1,6 +1,7 @@
 package cn.pany.walle.remoting.server;
 
 import cn.pany.walle.common.protocol.MessageType;
+import cn.pany.walle.common.utils.InvokerUtil;
 import cn.pany.walle.remoting.protocol.Header;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
@@ -15,6 +16,7 @@ import org.springframework.cglib.reflect.FastMethod;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +33,7 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
     ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(200, 300, 0, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>(50));
 
-    public static Map<String, Object> handlerMap = new HashMap<String, Object>(); // 存放接口名与服务对象之间的映射关系
+    public static Map<String, Object> handlerMap = new ConcurrentHashMap<>(); // 存放接口名与服务对象之间的映射关系
 
 
     @Override
@@ -45,7 +47,7 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
             switch (cmd.getHeader().getType()) {
                 case SERVICE_REQ:
 //                    processRequestCommand(ctx, cmd);
-                    LOG.info("biz message:"+msg.toString());
+                    LOG.debug("biz message:"+msg.toString());
 //                    LOG.info("biz message:"+msg.getBody().toString());
                     threadPoolExecutor.execute(new WalleBizTask(ctx,cmd));
                     break;
@@ -71,7 +73,9 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
             if (request == null)
                 return null;
             String className = request.getClassName();
-            Object serviceBean = handlerMap.get(className);
+            String invokerUrl= InvokerUtil.formatInvokerUrl(className,null,request.getVersion());;
+
+            Object serviceBean = handlerMap.get(invokerUrl);
 
             if(serviceBean!=null){
                 Class<?> serviceClass = serviceBean.getClass();
@@ -117,7 +121,7 @@ public class WalleServerHandler extends SimpleChannelInboundHandler<WalleMessage
         return message;
     }
 
-    public static void putHandlerMapBean(String interfaceName, Object serviceBean) throws BeansException {
-        handlerMap.put(interfaceName, serviceBean);
+    public static Object putHandlerMapBean(String interfaceName, Object serviceBean) throws BeansException {
+       return handlerMap.putIfAbsent(interfaceName, serviceBean);
     }
 }

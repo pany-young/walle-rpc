@@ -1,6 +1,8 @@
 package cn.pany.walle.remoting.api;
 
+import cn.pany.walle.common.URL;
 import cn.pany.walle.common.enums.RouterType;
+import cn.pany.walle.common.model.InvokerUrl;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.exception.RemotingException;
 import cn.pany.walle.remoting.exception.RpcException;
@@ -24,24 +26,31 @@ public class WalleInvoker<T> implements Invoker<T> {
 
 
     private List<WalleClient> clients = new ArrayList<>();
-
+    private final InvokerUrl invokerUrl;
     private final Class<T> type;
     private RouterType routerType = RouterType.RANDOM_LOADBALANCE;
     //class#method:version
-    private final String invokerUrl;
+    private final String invokerUrlStr;
     public static Map<String, WalleInvoker> walleInvokerMap = new ConcurrentHashMap<>();
 
-    public WalleInvoker(Class<T> serviceType, String invokerUrl) {
+    private final String version;
+    public WalleInvoker(Class<T> serviceType, String invokerUrlStr ) {
         this.type = serviceType;
-        this.invokerUrl = invokerUrl;
-        walleInvokerMap.putIfAbsent(invokerUrl, this);
+        this.invokerUrlStr = invokerUrlStr;
+        this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
+        this.version =invokerUrl.getVersion();
+
+
+        walleInvokerMap.putIfAbsent(invokerUrlStr, this);
     }
 
-    public WalleInvoker(Class<T> serviceType, String invokerUrl,RouterType routerType) {
+    public WalleInvoker(Class<T> serviceType, String invokerUrlStr,RouterType routerType ) {
         this.type = serviceType;
-        this.invokerUrl = invokerUrl;
+        this.invokerUrlStr = invokerUrlStr;
+        this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
         this.routerType =routerType;
-        walleInvokerMap.putIfAbsent(invokerUrl, this);
+        this.version=invokerUrl.getVersion();
+        walleInvokerMap.putIfAbsent(invokerUrlStr, this);
     }
 
     public WalleBizResponse send(WalleMessage walleMessage) {
@@ -94,7 +103,24 @@ public class WalleInvoker<T> implements Invoker<T> {
         return type;
     }
 
-    public String getInvokerUrl() {
+    public String getVersion() {
+        return version;
+    }
+
+    public InvokerUrl getInvokerUrl() {
         return invokerUrl;
+    }
+
+
+    public RouterType getRouterType() {
+        return routerType;
+    }
+
+    public void setRouterType(RouterType routerType) {
+        this.routerType = routerType;
+    }
+
+    public String getInvokerUrlStr() {
+        return invokerUrlStr;
     }
 }

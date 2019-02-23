@@ -77,7 +77,7 @@ public class WalleClient extends AbstractClient {
         this.walleApp=walleApp;
         this.interfaceList = interfaceList;
         this.walleRegistry=walleRegistry;
-        sessionObj.setRemoteIP(url.getIp());
+        sessionObj.setRemoteIP(url.getHost());
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
         for(InterfaceDetail interfaceDetail : interfaceList){
