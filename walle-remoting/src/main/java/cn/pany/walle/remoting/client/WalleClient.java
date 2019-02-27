@@ -193,6 +193,7 @@ public class WalleClient extends AbstractClient {
 
     @Override
     protected void doDisConnect() throws Throwable {
+        log.info("doDisConnect:"+getUrl().getAddress());
         for( InterfaceDetail interfaceDetail : interfaceList){
             WalleInvoker walleInvoker =  WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
             if(walleInvoker!=null){
