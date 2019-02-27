@@ -119,7 +119,7 @@ public interface WalleChannel<REQ,REP>{
     /**
      * Graceful close the channel.
      */
-    void close(int timeout);
+//    void close(int timeout);
 
 
     /**

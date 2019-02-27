@@ -50,7 +50,7 @@
         </xsd:attribute>
         <xsd:attribute name="interface" type="xsd:token" use="required">
             <xsd:annotation>
-                <xsd:documentation><![CDATA[ The service interface class name. ]]></xsd:documentation>
+                <xsd:documentation><![CDATA[ The ref interface class name. ]]></xsd:documentation>
                 <xsd:appinfo>
                     <tool:annotation>
                         <tool:expected-type type="java.lang.Class"/>
@@ -59,6 +59,36 @@
             </xsd:annotation>
         </xsd:attribute>
         <xsd:attribute name="app" type="xsd:IDREF">
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:element name="service" type="serviceType">
+    </xsd:element>
+
+    <xsd:complexType name="serviceType">
+        <xsd:attribute name="id" type="xsd:ID">
+        </xsd:attribute>
+        <xsd:attribute name="impl" type="xsd:token" use="required">
+            <xsd:annotation>
+                <xsd:documentation><![CDATA[ The service interface impl class name. ]]></xsd:documentation>
+                <xsd:appinfo>
+                    <tool:annotation>
+                        <tool:expected-type type="java.lang.Class"/>
+                    </tool:annotation>
+                </xsd:appinfo>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="interface" type="xsd:token" use="required">
+            <xsd:annotation>
+                <xsd:documentation><![CDATA[ The service interface class name. ]]></xsd:documentation>
+                <xsd:appinfo>
+                    <tool:annotation>
+                        <tool:expected-type type="java.lang.Class"/>
+                    </tool:annotation>
+                </xsd:appinfo>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="appName" type="xsd:string">
         </xsd:attribute>
     </xsd:complexType>
 </xsd:schema>

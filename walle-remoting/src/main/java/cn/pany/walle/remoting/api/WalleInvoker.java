@@ -40,7 +40,6 @@ public class WalleInvoker<T> implements Invoker<T> {
         this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
         this.version =invokerUrl.getVersion();
 
-
         walleInvokerMap.putIfAbsent(invokerUrlStr, this);
     }
 

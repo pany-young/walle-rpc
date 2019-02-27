@@ -3,9 +3,12 @@ package cn.pany.walle.remoting.client;
 import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
+import cn.pany.walle.common.utils.InvokerUtil;
 import cn.pany.walle.common.utils.NetUtils;
+import cn.pany.walle.remoting.api.Invoker;
 import cn.pany.walle.remoting.api.NettyWalleChannelHandler;
 import cn.pany.walle.remoting.api.WalleApp;
+import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.codec.WalleMessageDecoder;
 import cn.pany.walle.remoting.codec.WalleMessageEncoder;
 import cn.pany.walle.remoting.exception.RemotingException;
@@ -61,8 +64,8 @@ public class WalleClient extends AbstractClient {
     public SessionObj sessionObj = new SessionObj();
 
     private WalleApp walleApp;
-    List<InterfaceDetail> interfaceList;
-    Map<String,WalleClient> interfaceMap=new HashMap<>();
+    private List<InterfaceDetail> interfaceList;
+    private Map<String,WalleClient> interfaceMap=new HashMap<>();
     private WalleRegistry walleRegistry;
 
     static {
@@ -81,7 +84,7 @@ public class WalleClient extends AbstractClient {
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
         for(InterfaceDetail interfaceDetail : interfaceList){
-            String interfaceUrl =  interfaceDetail.getClassName() +":"+ interfaceDetail.getVersion();
+            String interfaceUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(),null,interfaceDetail.getVersion());
             interfaceMap.put(interfaceUrl,this);
         }
     }
@@ -173,12 +176,29 @@ public class WalleClient extends AbstractClient {
     @Override
     protected void afterConnect() throws Throwable {
         //获取接口信息
-//        walleApp.getInterFace();
+        walleApp.getWalleClientSet().add(this);
+        for (InterfaceDetail interfaceDetail : interfaceList) {
+            String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
+
+            WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(invokerUrl);
+            if (walleInvoker == null) {
+                walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(), invokerUrl);
+            }
+
+            if (!walleInvoker.getClients().contains(this)) {
+                walleInvoker.addToClients(this);
+            }
+        }
     }
 
     @Override
     protected void doDisConnect() throws Throwable {
-
+        for( InterfaceDetail interfaceDetail : interfaceList){
+            WalleInvoker walleInvoker =  WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
+            if(walleInvoker!=null){
+                walleInvoker.getClients().remove(this);
+            }
+        }
     }
 
     @Override

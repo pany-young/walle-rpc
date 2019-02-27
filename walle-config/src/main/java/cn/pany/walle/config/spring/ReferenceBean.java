@@ -23,7 +23,9 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
     protected String id;
     // 接口类型
     private String interfaceName;
+    private String implName;
     private Class<?> interfaceClass;
+    private Class<?> implClass;
     //class#method:version 暂不用
     //class:version
     private String version;

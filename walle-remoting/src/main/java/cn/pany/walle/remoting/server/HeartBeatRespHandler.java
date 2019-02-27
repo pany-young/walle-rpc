@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * 
  */
 public class HeartBeatRespHandler extends ChannelInboundHandlerAdapter {
-	private final static Logger log = LoggerFactory.getLogger(LoginAuthRespHandler.class);
+	private final static Logger log = LoggerFactory.getLogger(HeartBeatRespHandler.class);
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg)

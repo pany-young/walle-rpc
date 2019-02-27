@@ -110,19 +110,7 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
                             WalleClient walleClient = new WalleClient(getObject(), UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailList(), registry);
                             if (!walleApp.getWalleClientSet().contains(walleClient)) {
                                 walleClient.doOpen();
-                                walleApp.getWalleClientSet().add(walleClient);
-                                for (InterfaceDetail interfaceDetail : serverInfo.getInterfaceDetailList()) {
-                                    String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
-
-                                    WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(invokerUrl);
-                                    if (walleInvoker == null) {
-                                        walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(), invokerUrl);
-                                    }
-
-                                    if (!walleInvoker.getClients().contains(walleClient)) {
-                                        walleInvoker.addToClients(walleClient);
-                                    }
-                                }
+                                
                             }
 
                             break;

@@ -179,10 +179,10 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
         }
     }
 
-    public void close(int timeout) {
+//    public void close(int timeout) {
 //        ExecutorUtil.gracefulShutdown(executor, timeout);
-        close();
-    }
+//        close();
+//    }
 
     public InetSocketAddress getRemoteAddress() {
         Channel channel = getChannel();
