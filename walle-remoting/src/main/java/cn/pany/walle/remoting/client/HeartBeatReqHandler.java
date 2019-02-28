@@ -28,11 +28,18 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(HeartBeatReqHandler.class);
 
+    private WalleClient walleClient;
 
     private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     //    private volatile ScheduledFuture<?> heartBeat;
     private volatile HeartBeatTask heartBeatTask;
+
+    public HeartBeatReqHandler(WalleClient walleClient) {
+        super();
+        this.walleClient = walleClient;
+
+    }
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -77,8 +84,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-            throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 //        if(heartBeat!=null){
 //            heartBeat.cancel(true);
 //            heartBeat=null;
@@ -88,8 +94,9 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         String ip = address.getAddress().getHostAddress();
-        //todo  清理invoker里的链接
         log.info("HeartBeatReqHandler 断开:" + ip + ":" + address.getPort());
+        //清理invoker里的链接
+        walleClient.close();
     }
 
     private class HeartBeatTask implements Runnable {

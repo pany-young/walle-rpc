@@ -101,7 +101,7 @@ public class WalleClient extends AbstractClient {
                             .addLast("WallesMessageEncoder", new WalleMessageEncoder())
                             .addLast("ReadTimeoutHandler", new ReadTimeoutHandler(50))
 //                                    .addLast("LoginAuthHandler", new LoginAuthReqHandler())
-                                    .addLast("HeartBeatHandler", new HeartBeatReqHandler())
+                                    .addLast("HeartBeatHandler", new HeartBeatReqHandler(WalleClient.this))
                                     .addLast("WalleClientHandler", new WalleClientHandler());
                 }
             };
