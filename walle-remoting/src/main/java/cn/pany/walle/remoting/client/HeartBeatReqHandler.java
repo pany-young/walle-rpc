@@ -35,6 +35,9 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
     //    private volatile ScheduledFuture<?> heartBeat;
     private volatile HeartBeatTask heartBeatTask;
 
+//    private long HEART_BEAT_TIME =20000;
+    private long HEART_BEAT_TIME =1000;
+
     public HeartBeatReqHandler(WalleClient walleClient) {
         super();
         this.walleClient = walleClient;
@@ -46,7 +49,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(buildHeatBeat());
         heartBeatTask = new HeartBeatReqHandler.HeartBeatTask(ctx);
         ctx.executor().schedule(heartBeatTask,
-                20000, TimeUnit.MILLISECONDS);
+                HEART_BEAT_TIME, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleWithFixedDelay(new HeartBeatReqHandler.HeartBeatTask(ctx),
 //                0, 20000, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleAtFixedRate(new HeartBeatReqHandler.HeartBeatTask(ctx),
@@ -68,7 +71,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
                     + heartBeatTask.toString());
 //            ctx.writeAndFlush(heartBeat);
             ctx.executor().schedule(heartBeatTask,
-                    20000, TimeUnit.MILLISECONDS);
+                    HEART_BEAT_TIME, TimeUnit.MILLISECONDS);
         } else {
             ctx.fireChannelRead(msg);
 

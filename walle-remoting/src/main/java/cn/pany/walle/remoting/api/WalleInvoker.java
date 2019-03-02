@@ -11,6 +11,8 @@ import cn.pany.walle.remoting.loadbalance.ConsistenthashLoadbalance;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by pany on 17/12/11.
  */
 public class WalleInvoker<T> implements Invoker<T> {
+    private static final Logger log = LoggerFactory.getLogger(WalleInvoker.class);
 
 
     private List<WalleClient> clients = new ArrayList<>();
@@ -39,8 +42,6 @@ public class WalleInvoker<T> implements Invoker<T> {
         this.invokerUrlStr = invokerUrlStr;
         this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
         this.version =invokerUrl.getVersion();
-
-        walleInvokerMap.putIfAbsent(invokerUrlStr, this);
     }
 
     public WalleInvoker(Class<T> serviceType, String invokerUrlStr,RouterType routerType ) {
@@ -60,10 +61,13 @@ public class WalleInvoker<T> implements Invoker<T> {
             WalleClient currentClient = selectorClient(null);
 
             try {
+                if(currentClient ==null){
+                    throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause:selectorClient is null! ");
+                }
                 return currentClient.send(walleMessage);
             } catch (RemotingException e) {
 //                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
-                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + ", cause: ", e);
+                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause: ", e);
             }
         } else {
             return null;

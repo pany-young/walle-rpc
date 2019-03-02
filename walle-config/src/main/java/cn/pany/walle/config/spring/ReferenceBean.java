@@ -6,6 +6,8 @@ import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
@@ -19,13 +21,14 @@ import java.util.Set;
  * Created by pany on 16/9/6.
  */
 public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
+    private static final Logger log = LoggerFactory.getLogger(ReferenceBean.class);
 
     protected String id;
     // 接口类型
     private String interfaceName;
-    private String implName;
+
     private Class<?> interfaceClass;
-    private Class<?> implClass;
+
     //class#method:version 暂不用
     //class:version
     private String version;
@@ -71,29 +74,31 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<walle:reference interface=\"\" /> interface not allow null!");
         }
-        if(interfaceClass == null){
+        if (interfaceClass == null) {
             interfaceClass = Class.forName(interfaceName);
         }
 
         Map<String, String> map = new HashMap();
-        if(StringUtils.isBlank(version)){
-            version= "1.0.0";
+        if (StringUtils.isBlank(version)) {
+            version = "1.0.0";
         }
-        invokerUrl= InvokerUtil.formatInvokerUrl(interfaceName,null,version);;
+        invokerUrl = InvokerUtil.formatInvokerUrl(interfaceName, null, version);
+
 
 //        invokerUrl =  interfaceName +":"+ version;
-        invoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
-        if(invoker == null){
+        invoker = WalleInvoker.walleInvokerMap.get(invokerUrl);
+        if (invoker == null) {
             invoker = new WalleInvoker<>(interfaceClass, invokerUrl);
+            WalleInvoker checkInvoker = WalleInvoker.walleInvokerMap.putIfAbsent(invokerUrl, invoker);
+            if (checkInvoker != null) {
+                invoker = checkInvoker;
+            }
         }
 
-//        ValyRpcProxy valyRpcProxy = (ValyRpcProxy) this.applicationContext.getBean("valyRpcProxy");
-//        Object consumerProxy = valyRpcProxy.create(intefaceClazz);
         map.put(WalleConstant.INTERFACE_CLASS_KEY, interfaceName);
 
-//        Object consumerProxy = valyProxy.create(map);
-        if(ref==null){
-            ref=createProxy(map);
+        if (ref == null) {
+            ref = createProxy(map);
         }
 
         return ref;
@@ -105,32 +110,34 @@ public class ReferenceBean<T> implements FactoryBean, ApplicationContextAware {
         //从zookeeper获取服务端的信息
         //进行连接
         //对所需接口
-        if(walleApp.init()){
-            Set<WalleClient> walleClientSet = walleApp.getWalleClientSet();
-
-//            if (walleClientSet == null || walleClientSet.size() == 0) {
-//                throw new IllegalStateException("No such any client on app:" + walleApp.getAppName() + ".");
+        if (walleApp.init()) {
+//            Set<WalleClient> walleClientSet = walleApp.getWalleClientSet();
+//
+//            if (walleClientSet != null) {
+//                //从client里面匹配接口
+//                for (WalleClient client : walleClientSet) {
+//                    //class#method:version
+//                    WalleClient walleClient = client.getInterfaceMap().get(invokerUrl);
+//                    if (walleClient != null) {
+//                        if (!invoker.getClients().contains(walleClient)) {
+//                            log.info("walleInvoker [{}] add Client:[{}]", invokerUrl, walleClient.getUrl().getAddress());
+//
+//                            invoker.addToClients(walleClient);
+//                            log.info("walleInvoker [{}]   Clients size :[{}]", invokerUrl, invoker.getClients().size());
+//
+//
+//                        }
+//                    }
+//                }
 //            }
-
-            if (walleClientSet != null  ) {
-                //从client里面匹配接口
-                for (WalleClient client : walleClientSet) {
-                    //class#method:version
-                    WalleClient walleClient= client.getInterfaceMap().get(invokerUrl);
-                    if(walleClient != null){
-                        invoker.addToClients(walleClient);
-                    }
-                }
-            }
 
 
             ref = (T) WalleProxy.create(map, invoker);
             // 创建服务代理
             return ref;
-        }else {
+        } else {
             return null;
         }
-
 
 
     }
