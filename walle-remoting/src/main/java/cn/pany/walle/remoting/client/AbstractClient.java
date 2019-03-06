@@ -32,32 +32,28 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
     public AbstractClient(URL url) throws RemotingException {
 
         this.url = url;
+
+
+    }
+    public void init() throws RemotingException {
+
         try {
             doOpen();
-        } catch (Throwable t) {
-            close();
-            throw new RemotingException(url.toInetSocketAddress(), null,
-                    "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress()
-                            + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
-        }
-        try {
             connect();
             if (log.isInfoEnabled()) {
                 log.info("Start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress());
             }
         } catch (RemotingException t) {
-                close();
-                throw t;
+            close();
+            throw t;
 
         } catch (Throwable t) {
+            log.error("",t);
             close();
             throw new RemotingException(url.toInetSocketAddress(), null,
                     "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress()
                             + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
-
-//        executor =  new ThreadPoolExecutor(200, 250, 0, TimeUnit.MILLISECONDS,
-//                new LinkedBlockingQueue<Runnable>(50));
     }
 
 
@@ -67,6 +63,7 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
             if (isConnected()) {
                 return;
             }
+
             doConnect();
             if (!isConnected()) {
                 throw new RemotingException(this, "Failed connect to server " + getRemoteAddress() + " from " + getClass().getSimpleName() + " "
@@ -169,20 +166,17 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage,WalleB
 //        }
         try {
             disconnect();
-        } catch (Throwable e) {
-            log.warn(e.getMessage(), e);
-        }
-        try {
             doClose();
         } catch (Throwable e) {
-            log.warn(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
+
     }
 
-    public void close(int timeout) {
+//    public void close(int timeout) {
 //        ExecutorUtil.gracefulShutdown(executor, timeout);
-        close();
-    }
+//        close();
+//    }
 
     public InetSocketAddress getRemoteAddress() {
         Channel channel = getChannel();

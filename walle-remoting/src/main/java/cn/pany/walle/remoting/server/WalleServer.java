@@ -57,10 +57,11 @@ public class WalleServer {
 
 
     protected ChannelFuture future;
-
+    EventLoopGroup bossGroup;
+    EventLoopGroup workerGroup;
     protected void bind() {
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
 //                .option(ChannelOption.SO_BACKLOG, 100)
@@ -94,6 +95,11 @@ public class WalleServer {
             bossGroup.shutdownGracefully();
             log.info("workerGroup and bossGroup shutdownGracefully");
         }
+    }
+
+    public void shutdown(){
+        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
     }
 
     public String getServerAddress() {

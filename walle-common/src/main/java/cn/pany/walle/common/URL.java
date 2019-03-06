@@ -52,15 +52,6 @@ public final class URL implements Serializable {
 
     private final Map<String, String> parameters;
 
-    // ==== cache ====
-
-    private volatile transient Map<String, Number> numbers;
-
-    private volatile transient Map<String, URL> urls;
-
-    private volatile transient String ip;
-
-    private volatile transient String parameter;
 
     protected URL() {
         this.protocol = null;
@@ -75,14 +66,6 @@ public final class URL implements Serializable {
     public URL(String protocol, String host, int port) {
         this(protocol, host, port, null, (Map<String, String>) null);
     }
-
-//    public URL(String protocol, String host, int port, Map<String, String> parameters) {
-//        this(protocol,  host, port,  parameters);
-//    }
-
-//    public URL(String protocol, String host, int port, String path) {
-//        this(protocol,  host, port, path, (Map<String, String>) null);
-//    }
 
 
     public URL(String protocol, String host, int port, String version, Map<String, String> parameters) {
@@ -99,34 +82,6 @@ public final class URL implements Serializable {
         this.parameters = Collections.unmodifiableMap(parameters);
     }
 
-
-//    public URL(String protocol, String username, String password, String host, int port, String path) {
-//        this(protocol, username, password, host, port, path, (Map<String, String>) null);
-//    }
-
-
-//    public URL(String protocol, String username, String password, String host, int port, String path, Map<String, String> parameters) {
-//        if ((username == null || username.length() == 0)
-//                && password != null && password.length() > 0) {
-//            throw new IllegalArgumentException("Invalid url, password without username!");
-//        }
-//        this.protocol = protocol;
-//        this.username = username;
-//        this.password = password;
-//        this.host = host;
-//        this.port = (port < 0 ? 0 : port);
-//        // trim the beginning "/"
-//        while (path != null && path.startsWith("/")) {
-//            path = path.substring(1);
-//        }
-//        this.path = path;
-//        if (parameters == null) {
-//            parameters = new HashMap<String, String>();
-//        } else {
-//            parameters = new HashMap<String, String>(parameters);
-//        }
-//        this.parameters = Collections.unmodifiableMap(parameters);
-//    }
 
     /**
      * Parse url string
@@ -235,23 +190,7 @@ public final class URL implements Serializable {
         return host;
     }
 
-    /**
-     * 获取IP地址.
-     * <p/>
-     * 请注意：
-     * 如果和Socket的地址对比，
-     * 或用地址作为Map的Key查找，
-     * 请使用IP而不是Host，
-     * 否则配置域名会有问题
-     *
-     * @return ip
-     */
-    public String getIp() {
-        if (ip == null) {
-            ip = NetUtils.getIpByHost(host);
-        }
-        return ip;
-    }
+
 
     public int getPort() {
         return port;
@@ -266,242 +205,14 @@ public final class URL implements Serializable {
     }
 
 
-//    private String appendDefaultPort(String address, int defaultPort) {
-//        if (address != null && address.length() > 0
-//                && defaultPort > 0) {
-//            int i = address.indexOf(':');
-//            if (i < 0) {
-//                return address + ":" + defaultPort;
-//            } else if (Integer.parseInt(address.substring(i + 1)) == 0) {
-//                return address.substring(0, i + 1) + defaultPort;
-//            }
-//        }
-//        return address;
-//    }
 
     public Map<String, String> getParameters() {
         return parameters;
     }
 
 
-    private Map<String, Number> getNumbers() {
-        if (numbers == null) { // 允许并发重复创建
-            numbers = new ConcurrentHashMap<String, Number>();
-        }
-        return numbers;
-    }
-
-    private Map<String, URL> getUrls() {
-        if (urls == null) { // 允许并发重复创建
-            urls = new ConcurrentHashMap<String, URL>();
-        }
-        return urls;
-    }
-
-    public URL addParameterAndEncoded(String key, String value) {
-        if (value == null || value.length() == 0) {
-            return this;
-        }
-        return addParameter(key, encode(value));
-    }
-
-    public URL addParameter(String key, boolean value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, char value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, byte value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, short value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, int value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, long value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, float value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, double value) {
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, Enum<?> value) {
-        if (value == null) return this;
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, Number value) {
-        if (value == null) return this;
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, CharSequence value) {
-        if (value == null || value.length() == 0) return this;
-        return addParameter(key, String.valueOf(value));
-    }
-
-    public URL addParameter(String key, String value) {
-        if (key == null || key.length() == 0
-                || value == null || value.length() == 0) {
-            return this;
-        }
-        // 如果没有修改，直接返回。
-        if (value.equals(getParameters().get(key))) { // value != null
-            return this;
-        }
-
-        Map<String, String> map = new HashMap<String, String>(getParameters());
-        map.put(key, value);
-        return new URL(protocol, host, port, version, map);
-    }
 
 
-    /**
-     * Add parameters to a new url.
-     *
-     * @param parameters
-     * @return A new URL
-     */
-    public URL addParameters(Map<String, String> parameters) {
-        if (parameters == null || parameters.size() == 0) {
-            return this;
-        }
-
-        boolean hasAndEqual = true;
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            String value = getParameters().get(entry.getKey());
-            if (value == null) {
-                if (entry.getValue() != null) {
-                    hasAndEqual = false;
-                    break;
-                }
-            } else {
-                if (!value.equals(entry.getValue())) {
-                    hasAndEqual = false;
-                    break;
-                }
-            }
-        }
-        // 如果没有修改，直接返回。
-        if (hasAndEqual) return this;
-
-        Map<String, String> map = new HashMap<String, String>(getParameters());
-        map.putAll(parameters);
-        return new URL(protocol, host, port, version, map);
-    }
-
-
-    public URL addParameters(String... pairs) {
-        if (pairs == null || pairs.length == 0) {
-            return this;
-        }
-        if (pairs.length % 2 != 0) {
-            throw new IllegalArgumentException("Map pairs can not be odd number.");
-        }
-        Map<String, String> map = new HashMap<String, String>();
-        int len = pairs.length / 2;
-        for (int i = 0; i < len; i++) {
-            map.put(pairs[2 * i], pairs[2 * i + 1]);
-        }
-        return addParameters(map);
-    }
-
-    public URL addParameterString(String query) {
-        if (query == null || query.length() == 0) {
-            return this;
-        }
-        return addParameters(StringUtils.parseQueryString(query));
-    }
-
-    public URL removeParameter(String key) {
-        if (key == null || key.length() == 0) {
-            return this;
-        }
-        return removeParameters(key);
-    }
-
-    public URL removeParameters(Collection<String> keys) {
-        if (keys == null || keys.size() == 0) {
-            return this;
-        }
-        return removeParameters(keys.toArray(new String[0]));
-    }
-
-    public URL removeParameters(String... keys) {
-        if (keys == null || keys.length == 0) {
-            return this;
-        }
-        Map<String, String> map = new HashMap<String, String>(getParameters());
-        for (String key : keys) {
-            map.remove(key);
-        }
-        if (map.size() == getParameters().size()) {
-            return this;
-        }
-        return new URL(protocol, host, port, version, map);
-    }
-
-    public URL clearParameters() {
-        return new URL(protocol, host, port, version, new HashMap<String, String>());
-    }
-
-
-    public String toParameterString() {
-        if (parameter != null) {
-            return parameter;
-        }
-        return parameter = toParameterString(new String[0]);
-    }
-
-    public String toParameterString(String... parameters) {
-        StringBuilder buf = new StringBuilder();
-        buildParameters(buf, false, parameters);
-        return buf.toString();
-    }
-
-    private void buildParameters(StringBuilder buf, boolean concat, String[] parameters) {
-        if (getParameters() != null && getParameters().size() > 0) {
-            List<String> includes = (parameters == null || parameters.length == 0 ? null : Arrays.asList(parameters));
-            boolean first = true;
-            for (Map.Entry<String, String> entry : new TreeMap<String, String>(getParameters()).entrySet()) {
-                if (entry.getKey() != null && entry.getKey().length() > 0
-                        && (includes == null || includes.contains(entry.getKey()))) {
-                    if (first) {
-                        if (concat) {
-                            buf.append("?");
-                        }
-                        first = false;
-                    } else {
-                        buf.append("&");
-                    }
-                    buf.append(entry.getKey());
-                    buf.append("=");
-                    buf.append(entry.getValue() == null ? "" : entry.getValue().trim());
-                }
-            }
-        }
-    }
-
-
-    public java.net.URL toJavaURL() {
-        try {
-            return new java.net.URL(toString());
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
 
     public InetSocketAddress toInetSocketAddress() {
         return new InetSocketAddress(host, port);

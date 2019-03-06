@@ -1,6 +1,8 @@
 package cn.pany.walle.remoting.api;
 
+import cn.pany.walle.common.URL;
 import cn.pany.walle.common.enums.RouterType;
+import cn.pany.walle.common.model.InvokerUrl;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.exception.RemotingException;
 import cn.pany.walle.remoting.exception.RpcException;
@@ -9,6 +11,8 @@ import cn.pany.walle.remoting.loadbalance.ConsistenthashLoadbalance;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,27 +25,32 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by pany on 17/12/11.
  */
 public class WalleInvoker<T> implements Invoker<T> {
+    private static final Logger log = LoggerFactory.getLogger(WalleInvoker.class);
 
 
     private List<WalleClient> clients = new ArrayList<>();
-
+    private final InvokerUrl invokerUrl;
     private final Class<T> type;
     private RouterType routerType = RouterType.RANDOM_LOADBALANCE;
     //class#method:version
-    private final String invokerUrl;
+    private final String invokerUrlStr;
     public static Map<String, WalleInvoker> walleInvokerMap = new ConcurrentHashMap<>();
 
-    public WalleInvoker(Class<T> serviceType, String invokerUrl) {
+    private final String version;
+    public WalleInvoker(Class<T> serviceType, String invokerUrlStr ) {
         this.type = serviceType;
-        this.invokerUrl = invokerUrl;
-        walleInvokerMap.putIfAbsent(invokerUrl, this);
+        this.invokerUrlStr = invokerUrlStr;
+        this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
+        this.version =invokerUrl.getVersion();
     }
 
-    public WalleInvoker(Class<T> serviceType, String invokerUrl,RouterType routerType) {
+    public WalleInvoker(Class<T> serviceType, String invokerUrlStr,RouterType routerType ) {
         this.type = serviceType;
-        this.invokerUrl = invokerUrl;
+        this.invokerUrlStr = invokerUrlStr;
+        this.invokerUrl = InvokerUrl.valueOf(invokerUrlStr);
         this.routerType =routerType;
-        walleInvokerMap.putIfAbsent(invokerUrl, this);
+        this.version=invokerUrl.getVersion();
+        walleInvokerMap.putIfAbsent(invokerUrlStr, this);
     }
 
     public WalleBizResponse send(WalleMessage walleMessage) {
@@ -52,10 +61,13 @@ public class WalleInvoker<T> implements Invoker<T> {
             WalleClient currentClient = selectorClient(null);
 
             try {
+                if(currentClient ==null){
+                    throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause:selectorClient is null! ");
+                }
                 return currentClient.send(walleMessage);
             } catch (RemotingException e) {
 //                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
-                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + ", cause: ", e);
+                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause: ", e);
             }
         } else {
             return null;
@@ -94,7 +106,24 @@ public class WalleInvoker<T> implements Invoker<T> {
         return type;
     }
 
-    public String getInvokerUrl() {
+    public String getVersion() {
+        return version;
+    }
+
+    public InvokerUrl getInvokerUrl() {
         return invokerUrl;
+    }
+
+
+    public RouterType getRouterType() {
+        return routerType;
+    }
+
+    public void setRouterType(RouterType routerType) {
+        this.routerType = routerType;
+    }
+
+    public String getInvokerUrlStr() {
+        return invokerUrlStr;
     }
 }

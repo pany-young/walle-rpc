@@ -28,18 +28,28 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(HeartBeatReqHandler.class);
 
+    private WalleClient walleClient;
 
     private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     //    private volatile ScheduledFuture<?> heartBeat;
     private volatile HeartBeatTask heartBeatTask;
 
+    private long HEART_BEAT_TIME =20000;
+//    private long HEART_BEAT_TIME =1000;
+
+    public HeartBeatReqHandler(WalleClient walleClient) {
+        super();
+        this.walleClient = walleClient;
+
+    }
+
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         ctx.writeAndFlush(buildHeatBeat());
         heartBeatTask = new HeartBeatReqHandler.HeartBeatTask(ctx);
-        ctx.executor().schedule(heartBeatTask,
-                20000, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(heartBeatTask,
+                HEART_BEAT_TIME, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleWithFixedDelay(new HeartBeatReqHandler.HeartBeatTask(ctx),
 //                0, 20000, TimeUnit.MILLISECONDS);
 //        heartBeat = ctx.executor().scheduleAtFixedRate(new HeartBeatReqHandler.HeartBeatTask(ctx),
@@ -61,10 +71,9 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
                     + heartBeatTask.toString());
 //            ctx.writeAndFlush(heartBeat);
             ctx.executor().schedule(heartBeatTask,
-                    20000, TimeUnit.MILLISECONDS);
+                    HEART_BEAT_TIME, TimeUnit.MILLISECONDS);
         } else {
             ctx.fireChannelRead(msg);
-
         }
     }
 
@@ -77,8 +86,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-            throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 //        if(heartBeat!=null){
 //            heartBeat.cancel(true);
 //            heartBeat=null;
@@ -89,6 +97,8 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         String ip = address.getAddress().getHostAddress();
         log.info("HeartBeatReqHandler 断开:" + ip + ":" + address.getPort());
+        //清理invoker里的链接
+        walleClient.close();
     }
 
     private class HeartBeatTask implements Runnable {

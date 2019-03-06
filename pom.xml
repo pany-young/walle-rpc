@@ -23,7 +23,7 @@
     <groupId>cn.pany.walle</groupId>
     <artifactId>walle-rpc</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <modules>
         <module>walle-remoting</module>
         <module>walle-common</module>
@@ -50,7 +50,7 @@
 
 
     <properties>
-        <walle.version>0.0.2-SNAPSHOT</walle.version>
+        <walle.version>0.0.3-SNAPSHOT</walle.version>
         <lombok.version>1.16.4</lombok.version>
         <aspectj.version>1.7.0</aspectj.version>
         <spring.version>4.2.5.RELEASE</spring.version>

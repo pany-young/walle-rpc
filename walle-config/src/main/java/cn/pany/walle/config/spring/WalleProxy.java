@@ -40,20 +40,21 @@ public class WalleProxy {
                 new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        WalleMessage nettyMessage = new WalleMessage(); // 创建并初始化 RPC 请求
+                        WalleMessage walleMessage = new WalleMessage(); // 创建并初始化 RPC 请求
 
                         Header header = new Header();
                         header.setType(MessageType.SERVICE_REQ);
-                        nettyMessage.setHeader(header);
+                        walleMessage.setHeader(header);
                         WalleBizRequest walleBizRequest = new WalleBizRequest();
                         walleBizRequest.setRequestId(UUID.randomUUID().toString());
                         walleBizRequest.setClassName(method.getDeclaringClass().getName());
                         walleBizRequest.setMethodName(method.getName());
+                        walleBizRequest.setVersion(walleInvoker.getVersion());
                         walleBizRequest.setParameterTypes(method.getParameterTypes());
                         walleBizRequest.setParameters(args);
-                        nettyMessage.setBody(walleBizRequest);
+                        walleMessage.setBody(walleBizRequest);
 
-                        WalleBizResponse response =  walleInvoker.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
+                        WalleBizResponse response =  walleInvoker.send(walleMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
 //                        WalleBizResponse response = walleClient.send(nettyMessage); // 通过 RPC 客户端发送 RPC 请求并获取 RPC 响应
                         if(response == null){
                             return null;

@@ -4,6 +4,7 @@ import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.model.ServerInfo;
 import cn.pany.walle.common.utils.InvokerUtil;
+import cn.pany.walle.common.utils.StringUtils;
 import cn.pany.walle.common.utils.UrlUtils;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
@@ -15,6 +16,9 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -54,11 +58,12 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
 
     @Override
     public WalleApp getObject() throws Exception {
-        if(walleApp==null){
-            walleApp=new WalleApp(appName, loadRegistries());
+        if (walleApp == null) {
+            walleApp = new WalleApp(appName, loadRegistries());
+            walleApp.init();
         }
-        walleApp.init();
-        return  walleApp;
+
+        return walleApp;
     }
 
     @Override
@@ -76,72 +81,7 @@ public class WalleAppBean implements FactoryBean<WalleApp>, ApplicationContextAw
         this.applicationContext = applicationContext;
 
 //        log.info("Register zk watcher begin!");
-        PathChildrenCache childrenCache = null;
-        try {
-            childrenCache = new PathChildrenCache(registry.register(), WalleRegistry.ZK_SPLIT + getObject().getAppName()+WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT, true);
 
-            PathChildrenCacheListener childrenCacheListener = new PathChildrenCacheListener() {
-                @Override
-                public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                    log.info("zk监听开始进行事件分析");
-                    ChildData data = event.getData();
-                    ServerInfo serverInfo;
-                    String lastPath ;
-                    switch (event.getType()) {
-                        case CHILD_ADDED:
-                            serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
-//                            data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT));
-                            lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
-                            log.info("CHILD_ADDED : " + data.getPath() + "  数据:" + new String(data.getData()));
-
-                            WalleClient walleClient=new WalleClient(getObject(), UrlUtils.parseURL(lastPath,null),serverInfo.getInterfaceDetailList(),registry);
-                            if(!walleApp.getWalleClientSet().contains(walleClient)){
-                                walleClient.doOpen();
-                                walleApp.getWalleClientSet().add(walleClient);
-                                for(InterfaceDetail interfaceDetail : serverInfo.getInterfaceDetailList()){
-                                    String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(),null,interfaceDetail.getVersion());;
-                                    WalleInvoker walleInvoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
-                                    if(walleInvoker==null){
-                                        walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(),invokerUrl);
-                                    }
-
-                                    if(!walleInvoker.getClients().contains(walleClient)){
-                                        walleInvoker.addToClients(walleClient);
-                                    }
-                                }
-                            }
-
-                            break;
-                        case CHILD_REMOVED:
-//                            serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
-                            lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
-
-                            log.info("CHILD_REMOVED : " + data.getPath() + "  数据:" + new String(data.getData()));
-                            log.info("CHILD_REMOVED : " + data.getPath() + "  last path:" + lastPath);
-
-                            for(WalleClient walleClientTemp :walleApp.getWalleClientSet()){
-                                if( walleClientTemp.getUrl().getAddress().equals(lastPath)){
-                                    log.info("client REMOVED : " + walleClientTemp.getUrl().getAddress());
-                                    walleClientTemp.close();
-                                    walleApp.getWalleClientSet().remove(walleClientTemp);
-                                }
-                            }
-                            break;
-                        case CHILD_UPDATED:
-//                            serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
-                            log.info("CHILD_UPDATED : " + data.getPath() + "  数据:" + new String(data.getData()));
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            };
-            childrenCache.getListenable().addListener(childrenCacheListener);
-            log.info("Register zk app watcher path:[{}] successfully!", WalleRegistry.ZK_SPLIT+ WalleConstant.NAME_SPACE+WalleRegistry.ZK_SPLIT + getObject().getAppName());
-            childrenCache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
-        } catch (Exception e) {
-            log.error("",e);
-        }
     }
 
     protected WalleRegistry loadRegistries() throws Exception {
