@@ -30,7 +30,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
 
     private WalleClient walleClient;
 
-    private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+    private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
 
     //    private volatile ScheduledFuture<?> heartBeat;
     private volatile HeartBeatTask heartBeatTask;
@@ -97,8 +97,7 @@ public class HeartBeatReqHandler extends ChannelInboundHandlerAdapter {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         String ip = address.getAddress().getHostAddress();
         log.info("HeartBeatReqHandler 断开:" + ip + ":" + address.getPort());
-        //清理invoker里的链接
-        walleClient.close();
+        walleClient.reConnect();
     }
 
     private class HeartBeatTask implements Runnable {

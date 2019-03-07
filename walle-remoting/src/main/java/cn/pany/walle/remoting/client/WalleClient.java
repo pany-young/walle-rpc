@@ -4,6 +4,7 @@ import cn.pany.walle.common.URL;
 import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.utils.InvokerUtil;
+import cn.pany.walle.common.utils.NamedThreadFactory;
 import cn.pany.walle.common.utils.NetUtils;
 import cn.pany.walle.remoting.api.Invoker;
 import cn.pany.walle.remoting.api.NettyWalleChannelHandler;
@@ -42,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,21 +68,20 @@ public class WalleClient extends AbstractClient {
     private WalleApp walleApp;
     private List<InterfaceDetail> interfaceList;
     private Map<String, WalleClient> interfaceMap = new HashMap<>();
-    private WalleRegistry walleRegistry;
 
     static {
         Long timeout = WalleConstant.DEFAULT_TIMEOUT;
         log.info("CheckTimeoutResponseTask start");
-        //TODO 后续改成不是用static的方式？
+        //TODO 后续改成单例而不是用static？
         scheduledExecutorService.scheduleWithFixedDelay(new CheckTimeoutResponseTask(), 0, timeout, TimeUnit.MILLISECONDS);
     }
 
 
-    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList, WalleRegistry walleRegistry) throws RemotingException {
+    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList ) throws RemotingException {
         super(url);
         this.walleApp = walleApp;
         this.interfaceList = interfaceList;
-        this.walleRegistry = walleRegistry;
+//        this.walleRegistry = walleRegistry;
         sessionObj.setRemoteIP(url.getHost());
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
@@ -233,6 +234,22 @@ public class WalleClient extends AbstractClient {
     @Override
     protected Channel getChannel() {
         return this.channel;
+    }
+
+    @Override
+    public boolean checkIfNeedReconnect() {
+        try {
+            List<URL> urlList = walleApp.getServerList();
+            for(URL url : urlList){
+                if(url.getAddress().equals(this.getUrl().getAddress())){
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("",e);
+
+        }
+        return false;
     }
 
 
