@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2011 Alibaba Group.
- *  
+ * Copyright 2018-2019 Pany Young.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,8 @@
  */
 package cn.pany.walle.remoting.exception;
 
-/**
- * RPC Exception. (API, Prototype, ThreadSafe)
- *
- * @author shawn.qianx
- * @author william.liangf
- * @serial Don't change the class name and properties.
- * @export
- * @since 1.0
- */
-public final class RpcException extends RuntimeException {
+
+public final class WalleRpcException extends RuntimeException {
 
     public static final int UNKNOWN_EXCEPTION = 0;
     public static final int NETWORK_EXCEPTION = 1;
@@ -32,41 +24,42 @@ public final class RpcException extends RuntimeException {
     public static final int BIZ_EXCEPTION = 3;
     public static final int FORBIDDEN_EXCEPTION = 4;
     public static final int SERIALIZATION_EXCEPTION = 5;
-    private static final long serialVersionUID = 7815426752583648734L;
+    public static final int NO_CLIENT_EXCEPTION = 6;
+
     private int code; // RpcException不能有子类，异常类型用ErrorCode表示，以便保持兼容。
 
-    public RpcException() {
+    public WalleRpcException() {
         super();
     }
 
-    public RpcException(String message, Throwable cause) {
+    public WalleRpcException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public RpcException(String message) {
+    public WalleRpcException(String message) {
         super(message);
     }
 
-    public RpcException(Throwable cause) {
+    public WalleRpcException(Throwable cause) {
         super(cause);
     }
 
-    public RpcException(int code) {
+    public WalleRpcException(int code) {
         super();
         this.code = code;
     }
 
-    public RpcException(int code, String message, Throwable cause) {
+    public WalleRpcException(int code, String message, Throwable cause) {
         super(message, cause);
         this.code = code;
     }
 
-    public RpcException(int code, String message) {
+    public WalleRpcException(int code, String message) {
         super(message);
         this.code = code;
     }
 
-    public RpcException(int code, Throwable cause) {
+    public WalleRpcException(int code, Throwable cause) {
         super(cause);
         this.code = code;
     }

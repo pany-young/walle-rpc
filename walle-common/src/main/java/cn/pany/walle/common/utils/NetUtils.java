@@ -44,8 +44,7 @@ public class NetUtils {
     private static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");
     private static final Pattern LOCAL_IP_PATTERN = Pattern.compile("127(\\.\\d{1,3}){3}$");
     private static final Pattern IP_PATTERN = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3,5}$");
-    private static final Map<String, String> hostNameCache = new LRUCache<String, String>(1000);
-    private static volatile InetAddress LOCAL_ADDRESS = null;
+     private static volatile InetAddress LOCAL_ADDRESS = null;
 
     public static int getRandomPort() {
         return RND_PORT_START + RANDOM.nextInt(RND_PORT_RANGE);
@@ -201,27 +200,7 @@ public class NetUtils {
         return localAddress;
     }
 
-    public static String getHostName(String address) {
-        try {
-            int i = address.indexOf(':');
-            if (i > -1) {
-                address = address.substring(0, i);
-            }
-            String hostname = hostNameCache.get(address);
-            if (hostname != null && hostname.length() > 0) {
-                return hostname;
-            }
-            InetAddress inetAddress = InetAddress.getByName(address);
-            if (inetAddress != null) {
-                hostname = inetAddress.getHostName();
-                hostNameCache.put(address, hostname);
-                return hostname;
-            }
-        } catch (Throwable e) {
-            // ignore
-        }
-        return address;
-    }
+
 
     /**
      * @param hostName
