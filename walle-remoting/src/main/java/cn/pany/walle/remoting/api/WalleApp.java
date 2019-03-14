@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018-2019 Pany Young.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package cn.pany.walle.remoting.api;
 
 import cn.pany.walle.common.URL;
@@ -17,6 +32,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,7 +95,7 @@ public class WalleApp {
                 List<InterfaceDetail> interfaceList =
                         JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailList();
 
-                WalleClient walleClient = new WalleClient(this,url,interfaceList,walleRegistry);
+                WalleClient walleClient = new WalleClient(this,url,interfaceList);
                 if(!walleClientSet.contains(walleClient)){
                     //连接成功后会在afterConnetion里walleApp.getWalleClientSet().add(this);
                     walleClient.init();
@@ -115,7 +131,7 @@ public class WalleApp {
                                     lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
                                     log.info("CHILD_ADDED : " + data.getPath() + "  数据:" + new String(data.getData()));
 
-                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailList(), WalleApp.this.getWalleRegistry());
+                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailList() );
                                     if (! getWalleClientSet().contains(walleClient)) {
                                         getWalleClientSet().add(walleClient);
                                         walleClient.init();
@@ -124,32 +140,17 @@ public class WalleApp {
                                     break;
                                 case CHILD_REMOVED:
 //                            serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
-                                    lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
-
-                                    log.info("CHILD_REMOVED : " + data.getPath() + "  数据:" + new String(data.getData()));
-
-                                    for(WalleClient walleClientTemp :WalleApp.this.getWalleClientSet()){
-                                        if( walleClientTemp.getUrl().getAddress().equals(lastPath)){
-                                            log.info("client REMOVED : " + walleClientTemp.getUrl().getAddress());
-                                            walleClientTemp.close();
-                                            getWalleClientSet().remove(walleClientTemp);
-                                        }
-//                            todo 假如在注销的时候，对应的服务又再启动呢？
-/*                            todo (改动比较大，后续改动,目前不清理影响不大……)
-                              todo 方案1：加入标识状态，先标识为不可用，后续通过定时检查再把可用的启动
-                              todo 同时当调用失败的时候，如果是网络断开，也先标识为不可用,期间就算是服务不断的重启，也不理，通过后续检查
-*/
-//                            for(InterfaceDetail interfaceDetail : serverInfo.getInterfaceDetailList()){
-//                                String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(),null,interfaceDetail.getVersion());;
-//                                WalleInvoker walleInvoker =WalleInvoker.walleInvokerMap.get(invokerUrl);
-//                                if(walleInvoker!=null && walleInvoker.getClients()!=null){
-//                                    walleInvoker = new WalleInvoker<>(interfaceDetail.getClass(),invokerUrl);
-//                                    if(walleInvoker.getClients().contains(walleClient)){
-//                                        walleInvoker.getClients().remove(walleClient);
+//                                    lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
+//
+//                                    log.info("CHILD_REMOVED : " + data.getPath() + "  数据:" + new String(data.getData()));
+//
+//                                    for(WalleClient walleClientTemp :WalleApp.this.getWalleClientSet()){
+//                                        if( walleClientTemp.getUrl().getAddress().equals(lastPath)){
+//                                            log.info("client REMOVED : " + walleClientTemp.getUrl().getAddress());
+//                                            walleClientTemp.close();
+//                                            getWalleClientSet().remove(walleClientTemp);
+//                                        }
 //                                    }
-//                                }
-//                            }
-                                    }
                                     break;
                                 case CHILD_UPDATED:
 //                            serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
@@ -175,6 +176,17 @@ public class WalleApp {
         }
         appState=AppState.INITED;
         return true;
+    }
+
+   public List<URL> getServerList() throws Exception {
+        List<String> serverList = walleRegistry.getChildrenList(appPath);
+        List<URL> urlList =new ArrayList<>();
+        //ip:port#version@protocol
+        for (String serverDetail : serverList) {
+            URL url = UrlUtils.parseURL(serverDetail, null);
+            urlList.add(url);
+        }
+        return urlList;
     }
 
     public void  getInterFace(String appName){

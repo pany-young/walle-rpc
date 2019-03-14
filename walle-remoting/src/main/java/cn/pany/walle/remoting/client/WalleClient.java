@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018-2019 Pany Young.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package cn.pany.walle.remoting.client;
 
 import cn.pany.walle.common.URL;
@@ -5,18 +20,16 @@ import cn.pany.walle.common.constants.WalleConstant;
 import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.utils.InvokerUtil;
 import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.remoting.api.Invoker;
-import cn.pany.walle.remoting.api.NettyWalleChannelHandler;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.codec.WalleMessageDecoder;
 import cn.pany.walle.remoting.codec.WalleMessageEncoder;
 import cn.pany.walle.remoting.exception.RemotingException;
+import cn.pany.walle.remoting.exception.WalleRpcException;
 import cn.pany.walle.remoting.protocol.SessionObj;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
-import cn.pany.walle.remoting.registry.WalleRegistry;
 import cn.pany.walle.remoting.task.CheckTimeoutResponseTask;
 import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.Bootstrap;
@@ -30,7 +43,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.util.ResourceLeakDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,21 +78,20 @@ public class WalleClient extends AbstractClient {
     private WalleApp walleApp;
     private List<InterfaceDetail> interfaceList;
     private Map<String, WalleClient> interfaceMap = new HashMap<>();
-    private WalleRegistry walleRegistry;
 
     static {
         Long timeout = WalleConstant.DEFAULT_TIMEOUT;
         log.info("CheckTimeoutResponseTask start");
-        //TODO 后续改成不是用static的方式？
+        //TODO 后续改成单例而不是用static？
         scheduledExecutorService.scheduleWithFixedDelay(new CheckTimeoutResponseTask(), 0, timeout, TimeUnit.MILLISECONDS);
     }
 
 
-    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList, WalleRegistry walleRegistry) throws RemotingException {
+    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList ) throws RemotingException {
         super(url);
         this.walleApp = walleApp;
         this.interfaceList = interfaceList;
-        this.walleRegistry = walleRegistry;
+//        this.walleRegistry = walleRegistry;
         sessionObj.setRemoteIP(url.getHost());
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
@@ -141,14 +152,12 @@ public class WalleClient extends AbstractClient {
                     // 关闭旧的连接
                     Channel oldChannel = WalleClient.this.channel; // copy reference
                     if (oldChannel != null) {
-                        try {
+
                             if (log.isInfoEnabled()) {
                                 log.info("Close old netty channel " + oldChannel + " on create new netty channel " + newChannel);
                             }
                             oldChannel.close();
-                        } finally {
-                            NettyWalleChannelHandler.removeChannelIfDisconnected(oldChannel);
-                        }
+
                     }
                 } finally {
                     if (WalleClient.this.isClosed()) {
@@ -159,8 +168,7 @@ public class WalleClient extends AbstractClient {
                             newChannel.close();
                         } finally {
                             WalleClient.this.channel = null;
-                            NettyWalleChannelHandler.removeChannelIfDisconnected(newChannel);
-                        }
+                          }
                     } else {
                         WalleClient.this.channel = newChannel;
                     }
@@ -235,6 +243,22 @@ public class WalleClient extends AbstractClient {
         return this.channel;
     }
 
+    @Override
+    public boolean checkIfNeedReconnect() {
+        try {
+            List<URL> urlList = walleApp.getServerList();
+            for(URL url : urlList){
+                if(url.getAddress().equals(this.getUrl().getAddress())){
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("",e);
+
+        }
+        return false;
+    }
+
 
     @Override
     public WalleBizResponse send(WalleMessage request) throws RemotingException {
@@ -260,6 +284,10 @@ public class WalleClient extends AbstractClient {
                     pushFutureMap.remove(requestId);
                     WalleBizResponse response = responseMap.get(requestId);
                     responseMap.remove(requestId);
+
+                    if(response==null){
+                        throw new WalleRpcException(WalleRpcException.TIMEOUT_EXCEPTION);
+                    }
 
                     return response;
                 }

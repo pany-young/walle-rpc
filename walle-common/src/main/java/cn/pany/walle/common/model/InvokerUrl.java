@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2011 Alibaba Group.
+ * Copyright 2018-2019 Pany Young.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,10 @@
  */
 package cn.pany.walle.common.model;
 
-import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.common.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 public final class InvokerUrl implements Serializable {

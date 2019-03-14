@@ -1,65 +1,36 @@
-/*
- * Copyright 1999-2011 Alibaba Group.
- *  
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *  
- *      http://www.apache.org/licenses/LICENSE-2.0
- *  
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package cn.pany.walle.common;
 
-import cn.pany.walle.common.utils.NetUtils;
-import cn.pany.walle.common.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public final class URL implements Serializable {
 
-    private static final long serialVersionUID = -1985165475234910535L;
-
     private final static Logger log = LoggerFactory.getLogger(URL.class);
-
 
     private final String protocol;
 
-//    private final String username;
-
-//    private final String password;
-
     private final String host;
     private String version;
-
     private final int port;
-
-//    private final String path;
 
     private final Map<String, String> parameters;
 
 
     protected URL() {
         this.protocol = null;
-//        this.username = null;
-//        this.password = null;
         this.host = null;
         this.port = 0;
-//        this.path = null;
         this.parameters = null;
     }
 
@@ -96,12 +67,9 @@ public final class URL implements Serializable {
             throw new IllegalArgumentException("url == null");
         }
         String protocol = null;
-//        String username = null;
-//        String password = null;
         String version = null;
         String host = null;
         int port = 0;
-//        String path = null;
         Map<String, String> parameters = null;
         int i = url.indexOf("?"); // seperator between body and parameters 
         if (i >= 0) {
@@ -133,16 +101,6 @@ public final class URL implements Serializable {
             host = url.substring(0, i);
             url = url.substring(i + 1);
         }
-//        else {
-//            // case: file:/path/to/file.txt
-//            i = url.indexOf(":/");
-//            if (i >= 0) {
-//                if (i == 0) throw new IllegalStateException("url missing protocol: \"" + url + "\"");
-//                protocol = url.substring(0, i);
-//                url = url.substring(i + 1);
-//            }
-//        }
-
         i = url.indexOf("#");
         if (i >= 0 && i < url.length() - 1) {
             version = url.substring(i + 1);

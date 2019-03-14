@@ -1,13 +1,26 @@
+/*
+ * Copyright 2018-2019 Pany Young.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package cn.pany.walle.remoting.api;
 
-import cn.pany.walle.common.URL;
 import cn.pany.walle.common.enums.RouterType;
 import cn.pany.walle.common.model.InvokerUrl;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.exception.RemotingException;
-import cn.pany.walle.remoting.exception.RpcException;
+import cn.pany.walle.remoting.exception.WalleRpcException;
 import cn.pany.walle.remoting.loadbalance.AbstractLoadBalance;
-import cn.pany.walle.remoting.loadbalance.ConsistenthashLoadbalance;
 import cn.pany.walle.remoting.protocol.WalleBizRequest;
 import cn.pany.walle.remoting.protocol.WalleBizResponse;
 import cn.pany.walle.remoting.protocol.WalleMessage;
@@ -15,8 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by pany on 17/12/11.
  */
-public class WalleInvoker<T> implements Invoker<T> {
+public class WalleInvoker<T> {
     private static final Logger log = LoggerFactory.getLogger(WalleInvoker.class);
 
 
@@ -62,15 +73,15 @@ public class WalleInvoker<T> implements Invoker<T> {
 
             try {
                 if(currentClient ==null){
-                    throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause:selectorClient is null! ");
+                    throw new WalleRpcException(WalleRpcException.NO_CLIENT_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause:selectorClient is null! ");
                 }
                 return currentClient.send(walleMessage);
             } catch (RemotingException e) {
-//                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
-                throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause: ", e);
+//                throw new WalleRpcException(WalleRpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
+                throw new WalleRpcException(WalleRpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause: walleMessage.getBody() is not WalleBizRequest", e);
             }
         } else {
-            return null;
+            throw new WalleRpcException(WalleRpcException.UNKNOWN_EXCEPTION, "Failed to invoke remote method: " +invokerUrlStr+ ", cause: ! ");
         }
     }
 
