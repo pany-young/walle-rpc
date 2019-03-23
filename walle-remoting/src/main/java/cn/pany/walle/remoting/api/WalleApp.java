@@ -135,7 +135,16 @@ public class WalleApp {
                                     if (! getWalleClientSet().contains(walleClient)) {
                                         getWalleClientSet().add(walleClient);
                                         walleClient.init();
+                                    }else {
+                                        for(WalleClient tmpCLient : getWalleClientSet()){
+                                            if(tmpCLient.equals(walleClient)){
+                                                if(!tmpCLient.isConnected()){
+                                                    tmpCLient.init();
+                                                }
+                                            }
+                                        }
                                     }
+
 
                                     break;
                                 case CHILD_REMOVED:

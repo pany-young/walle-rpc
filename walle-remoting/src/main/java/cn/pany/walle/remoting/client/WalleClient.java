@@ -87,7 +87,7 @@ public class WalleClient extends AbstractClient {
     }
 
 
-    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList ) throws RemotingException {
+    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList) throws RemotingException {
         super(url);
         this.walleApp = walleApp;
         this.interfaceList = interfaceList;
@@ -152,26 +152,13 @@ public class WalleClient extends AbstractClient {
                     // 关闭旧的连接
                     Channel oldChannel = WalleClient.this.channel; // copy reference
                     if (oldChannel != null) {
-
-                            if (log.isInfoEnabled()) {
-                                log.info("Close old netty channel " + oldChannel + " on create new netty channel " + newChannel);
-                            }
-                            oldChannel.close();
-
+                        if (log.isInfoEnabled()) {
+                            log.info("Close old netty channel " + oldChannel + " on create new netty channel " + newChannel);
+                        }
+                        oldChannel.close();
                     }
                 } finally {
-                    if (WalleClient.this.isClosed()) {
-                        try {
-                            if (log.isInfoEnabled()) {
-                                log.info("Close new netty channel " + newChannel + ", because the client closed.");
-                            }
-                            newChannel.close();
-                        } finally {
-                            WalleClient.this.channel = null;
-                          }
-                    } else {
-                        WalleClient.this.channel = newChannel;
-                    }
+                    WalleClient.this.channel = newChannel;
                 }
             } else if (future.cause() != null) {
                 throw new RemotingException(this, "walle client failed to connect to server "
@@ -182,7 +169,8 @@ public class WalleClient extends AbstractClient {
                         + NetUtils.getLocalHost());
             }
         } finally {
-            if (!isConnected()) {
+            boolean isConnected=isConnected();
+            if (!isConnected) {
                 future.cancel(true);
             }
         }
@@ -247,13 +235,13 @@ public class WalleClient extends AbstractClient {
     public boolean checkIfNeedReconnect() {
         try {
             List<URL> urlList = walleApp.getServerList();
-            for(URL url : urlList){
-                if(url.getAddress().equals(this.getUrl().getAddress())){
+            for (URL url : urlList) {
+                if (url.getAddress().equals(this.getUrl().getAddress())) {
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("",e);
+            log.error("", e);
 
         }
         return false;
@@ -285,7 +273,7 @@ public class WalleClient extends AbstractClient {
                     WalleBizResponse response = responseMap.get(requestId);
                     responseMap.remove(requestId);
 
-                    if(response==null){
+                    if (response == null) {
                         throw new WalleRpcException(WalleRpcException.TIMEOUT_EXCEPTION);
                     }
 
@@ -313,7 +301,7 @@ public class WalleClient extends AbstractClient {
             responseMap.putIfAbsent(requestId, walleBizResponse);
             countDownLatch.countDown();
             pushFutureMap.remove(requestId);
-           } else {
+        } else {
             log.info("requestId :[{}] not in pushFutureMap,rep:[{}]", requestId, JSON.toJSONString(walleBizResponse));
         }
 
