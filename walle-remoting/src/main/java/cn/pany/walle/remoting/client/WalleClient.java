@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -76,7 +77,7 @@ public class WalleClient extends AbstractClient {
     public SessionObj sessionObj = new SessionObj();
 
     private WalleApp walleApp;
-    private List<InterfaceDetail> interfaceList;
+    private Set<InterfaceDetail> interfaceSet;
     private Map<String, WalleClient> interfaceMap = new HashMap<>();
 
     static {
@@ -87,15 +88,15 @@ public class WalleClient extends AbstractClient {
     }
 
 
-    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList ) throws RemotingException {
+    public WalleClient(WalleApp walleApp, URL url, Set<InterfaceDetail> interfaceSet) throws RemotingException {
         super(url);
         this.walleApp = walleApp;
-        this.interfaceList = interfaceList;
+        this.interfaceSet = interfaceSet;
 //        this.walleRegistry = walleRegistry;
         sessionObj.setRemoteIP(url.getHost());
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
-        for (InterfaceDetail interfaceDetail : interfaceList) {
+        for (InterfaceDetail interfaceDetail : interfaceSet) {
             String interfaceUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
             interfaceMap.put(interfaceUrl, this);
         }
@@ -152,26 +153,13 @@ public class WalleClient extends AbstractClient {
                     // 关闭旧的连接
                     Channel oldChannel = WalleClient.this.channel; // copy reference
                     if (oldChannel != null) {
-
-                            if (log.isInfoEnabled()) {
-                                log.info("Close old netty channel " + oldChannel + " on create new netty channel " + newChannel);
-                            }
-                            oldChannel.close();
-
+                        if (log.isInfoEnabled()) {
+                            log.info("Close old netty channel " + oldChannel + " on create new netty channel " + newChannel);
+                        }
+                        oldChannel.close();
                     }
                 } finally {
-                    if (WalleClient.this.isClosed()) {
-                        try {
-                            if (log.isInfoEnabled()) {
-                                log.info("Close new netty channel " + newChannel + ", because the client closed.");
-                            }
-                            newChannel.close();
-                        } finally {
-                            WalleClient.this.channel = null;
-                          }
-                    } else {
-                        WalleClient.this.channel = newChannel;
-                    }
+                    WalleClient.this.channel = newChannel;
                 }
             } else if (future.cause() != null) {
                 throw new RemotingException(this, "walle client failed to connect to server "
@@ -182,7 +170,8 @@ public class WalleClient extends AbstractClient {
                         + NetUtils.getLocalHost());
             }
         } finally {
-            if (!isConnected()) {
+            boolean isConnected = isConnected();
+            if (!isConnected) {
                 future.cancel(true);
             }
         }
@@ -192,7 +181,7 @@ public class WalleClient extends AbstractClient {
     protected void afterConnect() throws Exception {
         log.info("walleClient afterConnect  :[{}]", getUrl().getAddress());
 
-        if (walleApp == null || interfaceList == null) {
+        if (walleApp == null || interfaceSet == null) {
             throw new RuntimeException("no init success!");
         }
         //获取接口信息
@@ -200,7 +189,7 @@ public class WalleClient extends AbstractClient {
             walleApp.getWalleClientSet().add(this);
         }
 
-        for (InterfaceDetail interfaceDetail : interfaceList) {
+        for (InterfaceDetail interfaceDetail : interfaceSet) {
             String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
 
             WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(invokerUrl);
@@ -225,17 +214,15 @@ public class WalleClient extends AbstractClient {
     @Override
     protected void doDisConnect() {
         log.info("doDisConnect:" + getUrl().getAddress());
-        if (interfaceList != null) {
-            if (interfaceList != null) {
-                for (InterfaceDetail interfaceDetail : interfaceList) {
-                    WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
-                    if (walleInvoker != null) {
-                        walleInvoker.getClients().remove(this);
-                    }
+
+        if (interfaceSet != null) {
+            for (InterfaceDetail interfaceDetail : interfaceSet) {
+                WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
+                if (walleInvoker != null) {
+                    walleInvoker.getClients().remove(this);
                 }
             }
         }
-
     }
 
     @Override
@@ -247,13 +234,13 @@ public class WalleClient extends AbstractClient {
     public boolean checkIfNeedReconnect() {
         try {
             List<URL> urlList = walleApp.getServerList();
-            for(URL url : urlList){
-                if(url.getAddress().equals(this.getUrl().getAddress())){
+            for (URL url : urlList) {
+                if (url.getAddress().equals(this.getUrl().getAddress())) {
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("",e);
+            log.error("", e);
 
         }
         return false;
@@ -285,7 +272,7 @@ public class WalleClient extends AbstractClient {
                     WalleBizResponse response = responseMap.get(requestId);
                     responseMap.remove(requestId);
 
-                    if(response==null){
+                    if (response == null) {
                         throw new WalleRpcException(WalleRpcException.TIMEOUT_EXCEPTION);
                     }
 
@@ -313,7 +300,7 @@ public class WalleClient extends AbstractClient {
             responseMap.putIfAbsent(requestId, walleBizResponse);
             countDownLatch.countDown();
             pushFutureMap.remove(requestId);
-           } else {
+        } else {
             log.info("requestId :[{}] not in pushFutureMap,rep:[{}]", requestId, JSON.toJSONString(walleBizResponse));
         }
 
@@ -328,12 +315,12 @@ public class WalleClient extends AbstractClient {
         this.walleApp = walleApp;
     }
 
-    public List<InterfaceDetail> getInterfaceList() {
-        return interfaceList;
+    public Set<InterfaceDetail> getInterfaceSet() {
+        return interfaceSet;
     }
 
-    public void setInterfaceList(List<InterfaceDetail> interfaceList) {
-        this.interfaceList = interfaceList;
+    public void setInterfaceSet(Set<InterfaceDetail> interfaceSet) {
+        this.interfaceSet = interfaceSet;
     }
 
     public Map<String, WalleClient> getInterfaceMap() {

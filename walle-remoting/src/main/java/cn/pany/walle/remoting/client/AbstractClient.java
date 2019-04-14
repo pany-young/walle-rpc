@@ -85,7 +85,7 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage, Walle
             doConnect();
             if (!isConnected()) {
                 throw new RemotingException(this, "Failed connect to server " + getRemoteAddress() + " from " + getClass().getSimpleName() + " "
-                        + NetUtils.getLocalHost() + ", cause: Connect wait timeout: " + "ms.");
+                        + NetUtils.getLocalHost() + ", cause: afterConnect but is not connect. " );
             } else {
                 if (log.isInfoEnabled()) {
                     log.info("Successed connect to server " + getRemoteAddress() + " from " + getClass().getSimpleName() + " "
@@ -222,7 +222,8 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage, Walle
         Channel channel = getChannel();
         if (channel == null)
             return false;
-        return channel.isActive();
+        boolean isActive =channel.isActive();
+        return isActive;
     }
 
     @Override
@@ -230,10 +231,7 @@ public abstract class AbstractClient implements WalleChannel<WalleMessage, Walle
         return this.url;
     }
 
-    @Override
-    public boolean isClosed() {
-        return false;
-    }
+
 
 
     public abstract WalleBizResponse send(WalleMessage request) throws RemotingException;

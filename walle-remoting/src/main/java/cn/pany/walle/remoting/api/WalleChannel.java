@@ -59,17 +59,8 @@ public interface WalleChannel<REQ,REP>{
      */
     REP send(REQ message) throws RemotingException;
 
-    /**
-     * close the channel.
-     */
-    void close();
 
 
 
-    /**
-     * is closed.
-     *
-     * @return closed
-     */
-    boolean isClosed();
+
 }

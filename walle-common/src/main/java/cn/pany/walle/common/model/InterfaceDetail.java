@@ -39,4 +39,18 @@ public class InterfaceDetail {
     public void setInterfaceUrl(String interfaceUrl) {
         this.interfaceUrl = interfaceUrl;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof  InterfaceDetail){
+           return interfaceUrl.equals(((InterfaceDetail) o).getInterfaceUrl());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getInterfaceUrl().hashCode();
+    }
+
 }

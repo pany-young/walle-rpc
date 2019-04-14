@@ -82,9 +82,35 @@ public class WalleBeanDefinitionParser implements BeanDefinitionParser {
             beanDefinition.getPropertyValues().addPropertyValue("appName", appName);
             beanDefinition.getPropertyValues().addPropertyValue("registry", registryBean);
 
+        } else if (WalleServiceBean.class.equals(beanClass)) {
+            String interfaceName = element.getAttribute("interface");
+            String implName = element.getAttribute("impl");
+            String version = element.getAttribute("version");
+
+            String appName = element.getAttribute("app");
+            RuntimeBeanReference appBean = new RuntimeBeanReference(appName);
+
+
+            beanDefinition.getPropertyValues().addPropertyValue("id", id);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "interfaceName", interfaceName);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "implName", implName);
+
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "version", version);
+            beanDefinition.getPropertyValues().addPropertyValue(
+                    "walleApp", appBean);
+            try {
+                beanDefinition.getPropertyValues().addPropertyValue(
+                        "implClass", Class.forName(implName));
+            } catch (ClassNotFoundException e) {
+                logger.error("", e);
+            }
         }
         parserContext.getRegistry().registerBeanDefinition(id,
                 beanDefinition);
+
         return beanDefinition;
     }
 

@@ -1,48 +1,55 @@
 package cn.pany.walle.config.spring;
 
 import cn.pany.walle.common.constants.WalleConstant;
+import cn.pany.walle.common.model.InterfaceDetail;
 import cn.pany.walle.common.utils.InvokerUtil;
+import cn.pany.walle.common.utils.StringUtils;
 import cn.pany.walle.remoting.api.WalleApp;
 import cn.pany.walle.remoting.api.WalleInvoker;
 import cn.pany.walle.remoting.client.WalleClient;
 import cn.pany.walle.remoting.server.WalleServerHandler;
-import org.apache.commons.lang.StringUtils;
+import cn.pany.walle.remoting.server.WalleSmartServer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by pany on 16/9/6.
+ * @author pany young
+ * @email dev_pany@163.com
+ * @date 2019/4/13
  */
-public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware {
+public class WalleServiceBean<T> implements FactoryBean, InitializingBean, ApplicationContextAware {
 
     protected String id;
     // 接口类型
     private String interfaceName;
     private String implName;
-    private Class<?> interfaceClass;
+//    private Class<?> interfaceClass;
     private Class<?> implClass;
     //class#method:version 暂不用
     //class:version
     private String version;
     private String protocol;
     private String invokerUrl;
-    // 接口代理类引用
+    // 具体实现类引用
     private transient volatile Object ref;
-
+    private WalleApp walleApp;
     private transient ApplicationContext applicationContext;
 
-    public Class<?> getInterfaceClass() {
-        return interfaceClass;
-    }
+//    public Class<?> getInterfaceClass() {
+//        return interfaceClass;
+//    }
 
-    public void setInterfaceClass(Class<?> interfaceClass) {
-        this.interfaceClass = interfaceClass;
+    public Class<?> getImplClass() {
+        return implClass;
     }
 
     public String getId() {
@@ -61,14 +68,37 @@ public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware
         this.interfaceName = interfaceName;
     }
 
+    public String getImplName() {
+        return implName;
+    }
+
+    public void setImplName(String implName) {
+        this.implName = implName;
+    }
+
+    public void setImplClass(Class<?> implClass) {
+        this.implClass = implClass;
+    }
+
+    public WalleApp getWalleApp() {
+        return walleApp;
+    }
+
+    public void setWalleApp(WalleApp walleApp) {
+        this.walleApp = walleApp;
+    }
+
     @Override
     public Object getObject() throws Exception {
 
         if (interfaceName == null || interfaceName.length() == 0) {
-            throw new IllegalStateException("<walle:reference interface=\"\" /> interface not allow null!");
+            throw new IllegalStateException("<walle:service interface=\"\" /> interface not allow null!");
         }
-        if (interfaceClass == null) {
-            interfaceClass = Class.forName(interfaceName);
+        if (implName == null || implName.length() == 0) {
+            throw new IllegalStateException("<walle:service impl=\"\" /> interface not allow null!");
+        }
+        if (implClass == null) {
+            implClass = Class.forName(implName);
         }
 
         Map<String, String> map = new HashMap();
@@ -77,11 +107,13 @@ public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware
         }
         invokerUrl = InvokerUtil.formatInvokerUrl(interfaceName, null, version);
 
-        ref = interfaceClass.newInstance();
-        String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceName, null, version);
+        if(ref ==null){
+            ref = implClass.newInstance();
+            InterfaceDetail interfaceDetail = new InterfaceDetail(interfaceName, version);
+            WalleServerHandler.handlerMap.put(invokerUrl, ref);
 
-        WalleServerHandler.handlerMap.put(invokerUrl, ref);
-
+            WalleSmartServer.addInterfaceDetail(walleApp.getAppName(),interfaceDetail);
+        }
 
         return ref;
     }
@@ -89,7 +121,7 @@ public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware
 
     @Override
     public Class<?> getObjectType() {
-        return getInterfaceClass();
+        return getImplClass();
     }
 
     @Override
@@ -101,7 +133,6 @@ public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-
 
     public String getVersion() {
         return version;
@@ -131,4 +162,11 @@ public class WalleServiceBean<T> implements FactoryBean, ApplicationContextAware
         return applicationContext;
     }
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+       if(ref==null){
+           ref=getObject();
+       }
+        System.out.println("after service");
+    }
 }

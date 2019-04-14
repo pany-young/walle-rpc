@@ -1,19 +1,19 @@
 package cn.pany.walle.common.model;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pany on 18/9/23.
  */
 public class ServerInfo {
-    List<InterfaceDetail> interfaceDetailList;
+    Set<InterfaceDetail> interfaceDetailSet;
 
-
-    public List<InterfaceDetail> getInterfaceDetailList() {
-        return interfaceDetailList;
+    public Set<InterfaceDetail> getInterfaceDetailSet() {
+        return interfaceDetailSet;
     }
 
-    public void setInterfaceDetailList(List<InterfaceDetail> interfaceDetailList) {
-        this.interfaceDetailList = interfaceDetailList;
+    public void setInterfaceDetailSet(Set<InterfaceDetail> interfaceDetailSet) {
+        this.interfaceDetailSet = interfaceDetailSet;
     }
 }

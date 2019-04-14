@@ -19,6 +19,7 @@ import cn.pany.walle.config.spring.ReferenceBean;
 import cn.pany.walle.config.spring.RegistryBean;
 import cn.pany.walle.config.spring.WalleAppBean;
 import cn.pany.walle.config.spring.WalleBeanDefinitionParser;
+import cn.pany.walle.config.spring.WalleServiceBean;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
@@ -30,5 +31,6 @@ public class WalleNamespaceHandler extends NamespaceHandlerSupport {
         registerBeanDefinitionParser("registry", new WalleBeanDefinitionParser(RegistryBean.class));
         registerBeanDefinitionParser("app", new WalleBeanDefinitionParser(WalleAppBean.class));
         registerBeanDefinitionParser("reference", new WalleBeanDefinitionParser(ReferenceBean.class));
+        registerBeanDefinitionParser("service", new WalleBeanDefinitionParser(WalleServiceBean.class));
     }
 }
