@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by pany on 16/8/25.l
@@ -87,7 +88,7 @@ public class WalleRegistry {
         return client;
     }
 
-    public void addServiceListener(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
+    public void addServiceListener(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
         try {
             setServerInfo(serverAppMap,serverAddress);
             ConnectionStateListener connectionStateListener = new ConnectionStateListener() {
@@ -108,17 +109,17 @@ public class WalleRegistry {
         }
     }
 
-    private void setServerInfo(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress){
-        for (Map.Entry<String, List<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
-            List<InterfaceDetail> interfaceList = tempApp.getValue();
-            if (interfaceList == null || interfaceList.isEmpty()) {
+    private void setServerInfo(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress){
+        for (Map.Entry<String, Set<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
+            Set<InterfaceDetail> interfaceDetailSet = tempApp.getValue();
+            if (interfaceDetailSet == null || interfaceDetailSet.isEmpty()) {
                 continue;
             }
             String appName = tempApp.getKey();
             String appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT + WalleRegistry.ZK_SPLIT + serverAddress;
 
             ServerInfo serverInfo = new ServerInfo();
-            serverInfo.setInterfaceDetailList(interfaceList);
+            serverInfo.setInterfaceDetailSet(interfaceDetailSet);
             try {
                 setData(appPath, JSON.toJSONString(serverInfo));
             } catch (Exception e) {
@@ -126,9 +127,9 @@ public class WalleRegistry {
             }
         }
     }
-    public void removeServiceListener(Map<String, List<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
-        for (Map.Entry<String, List<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
-            List<InterfaceDetail> interfaceList = tempApp.getValue();
+    public void removeServiceListener(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
+        for (Map.Entry<String, Set<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
+            Set<InterfaceDetail> interfaceList = tempApp.getValue();
             if (interfaceList == null || interfaceList.isEmpty()) {
                 continue;
             }

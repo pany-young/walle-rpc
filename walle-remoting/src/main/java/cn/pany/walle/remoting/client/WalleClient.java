@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -76,7 +77,7 @@ public class WalleClient extends AbstractClient {
     public SessionObj sessionObj = new SessionObj();
 
     private WalleApp walleApp;
-    private List<InterfaceDetail> interfaceList;
+    private Set<InterfaceDetail> interfaceSet;
     private Map<String, WalleClient> interfaceMap = new HashMap<>();
 
     static {
@@ -87,15 +88,15 @@ public class WalleClient extends AbstractClient {
     }
 
 
-    public WalleClient(WalleApp walleApp, URL url, List<InterfaceDetail> interfaceList) throws RemotingException {
+    public WalleClient(WalleApp walleApp, URL url, Set<InterfaceDetail> interfaceSet) throws RemotingException {
         super(url);
         this.walleApp = walleApp;
-        this.interfaceList = interfaceList;
+        this.interfaceSet = interfaceSet;
 //        this.walleRegistry = walleRegistry;
         sessionObj.setRemoteIP(url.getHost());
         sessionObj.setPort(url.getPort());
         sessionObj.setChannel(channel);
-        for (InterfaceDetail interfaceDetail : interfaceList) {
+        for (InterfaceDetail interfaceDetail : interfaceSet) {
             String interfaceUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
             interfaceMap.put(interfaceUrl, this);
         }
@@ -169,7 +170,7 @@ public class WalleClient extends AbstractClient {
                         + NetUtils.getLocalHost());
             }
         } finally {
-            boolean isConnected=isConnected();
+            boolean isConnected = isConnected();
             if (!isConnected) {
                 future.cancel(true);
             }
@@ -180,7 +181,7 @@ public class WalleClient extends AbstractClient {
     protected void afterConnect() throws Exception {
         log.info("walleClient afterConnect  :[{}]", getUrl().getAddress());
 
-        if (walleApp == null || interfaceList == null) {
+        if (walleApp == null || interfaceSet == null) {
             throw new RuntimeException("no init success!");
         }
         //获取接口信息
@@ -188,7 +189,7 @@ public class WalleClient extends AbstractClient {
             walleApp.getWalleClientSet().add(this);
         }
 
-        for (InterfaceDetail interfaceDetail : interfaceList) {
+        for (InterfaceDetail interfaceDetail : interfaceSet) {
             String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceDetail.getClassName(), null, interfaceDetail.getVersion());
 
             WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(invokerUrl);
@@ -213,17 +214,15 @@ public class WalleClient extends AbstractClient {
     @Override
     protected void doDisConnect() {
         log.info("doDisConnect:" + getUrl().getAddress());
-        if (interfaceList != null) {
-            if (interfaceList != null) {
-                for (InterfaceDetail interfaceDetail : interfaceList) {
-                    WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
-                    if (walleInvoker != null) {
-                        walleInvoker.getClients().remove(this);
-                    }
+
+        if (interfaceSet != null) {
+            for (InterfaceDetail interfaceDetail : interfaceSet) {
+                WalleInvoker walleInvoker = WalleInvoker.walleInvokerMap.get(interfaceDetail.getInterfaceUrl());
+                if (walleInvoker != null) {
+                    walleInvoker.getClients().remove(this);
                 }
             }
         }
-
     }
 
     @Override
@@ -316,12 +315,12 @@ public class WalleClient extends AbstractClient {
         this.walleApp = walleApp;
     }
 
-    public List<InterfaceDetail> getInterfaceList() {
-        return interfaceList;
+    public Set<InterfaceDetail> getInterfaceSet() {
+        return interfaceSet;
     }
 
-    public void setInterfaceList(List<InterfaceDetail> interfaceList) {
-        this.interfaceList = interfaceList;
+    public void setInterfaceSet(Set<InterfaceDetail> interfaceSet) {
+        this.interfaceSet = interfaceSet;
     }
 
     public Map<String, WalleClient> getInterfaceMap() {

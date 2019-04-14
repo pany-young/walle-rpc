@@ -92,8 +92,8 @@ public class WalleApp {
 
                 byte[] interfaceListByte = walleRegistry.
                 getData(appPath + WalleRegistry.ZK_SPLIT + serverDetail);
-                List<InterfaceDetail> interfaceList =
-                        JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailList();
+                Set<InterfaceDetail> interfaceList =
+                        JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailSet();
 
                 WalleClient walleClient = new WalleClient(this,url,interfaceList);
                 if(!walleClientSet.contains(walleClient)){
@@ -131,7 +131,7 @@ public class WalleApp {
                                     lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
                                     log.info("CHILD_ADDED : " + data.getPath() + "  数据:" + new String(data.getData()));
 
-                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailList() );
+                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailSet() );
                                     if (! getWalleClientSet().contains(walleClient)) {
                                         getWalleClientSet().add(walleClient);
                                         walleClient.init();

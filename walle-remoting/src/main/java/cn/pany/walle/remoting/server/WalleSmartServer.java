@@ -29,8 +29,10 @@ import org.springframework.context.SmartLifecycle;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +80,7 @@ public class WalleSmartServer extends WalleServer implements ApplicationContextA
                 executorService.shutdownNow();
             }
             log.info("executorService shutdown");
-            } catch (Exception e) {
+        } catch (Exception e) {
             log.error("", e);
         }
         runnable.run();
@@ -124,7 +126,8 @@ public class WalleSmartServer extends WalleServer implements ApplicationContextA
 //
 //    }
 
-    private static Map<String, List<InterfaceDetail>> serverAppMap =new ConcurrentHashMap<>();
+    //appName,InterfaceList
+    public static Map<String, Set<InterfaceDetail>> serverAppMap = new ConcurrentHashMap<>();
 
     private void registry() {
 
@@ -137,22 +140,14 @@ public class WalleSmartServer extends WalleServer implements ApplicationContextA
                 String interfaceName = serviceBean.getClass().getAnnotation(WalleRpcService.class).value().getName();
                 String version = serviceBean.getClass().getAnnotation(WalleRpcService.class).version();
                 String appName = serviceBean.getClass().getAnnotation(WalleRpcService.class).appName();
-                String invokerUrl= InvokerUtil.formatInvokerUrl(interfaceName,null,version);;
+                String invokerUrl = InvokerUtil.formatInvokerUrl(interfaceName, null, version);
 
                 WalleServerHandler.handlerMap.put(invokerUrl, serviceBean);
 
                 //注册到zookpeer
                 //class#method:version
                 InterfaceDetail interfaceDetail = new InterfaceDetail(interfaceName, version);
-                if (serverAppMap.get(appName) == null) {
-                    List<InterfaceDetail> interfaceList = new ArrayList<>();
-//                    interfaceList.add(interfaceName + ":" + version);
-                    interfaceList.add(interfaceDetail);
-                    serverAppMap.put(appName, interfaceList);
-                } else {
-                    List<InterfaceDetail> interfaceList = serverAppMap.get(appName);
-                    interfaceList.add(interfaceDetail);
-                }
+                addInterfaceDetail(appName, interfaceDetail);
             }
         }
         try {
@@ -160,7 +155,20 @@ public class WalleSmartServer extends WalleServer implements ApplicationContextA
         } catch (Exception e) {
             log.error("", e);
         }
+    }
 
-
+    public static void addInterfaceDetail(String appName, InterfaceDetail interfaceDetail) {
+//注册到zookpeer
+        //class#method:version
+//        InterfaceDetail interfaceDetail = new InterfaceDetail(interfaceName, version);
+        Set<InterfaceDetail> interfaceList = new HashSet<>();
+        Set<InterfaceDetail> checkList = serverAppMap.putIfAbsent(appName, interfaceList);
+        if (checkList == null) {
+//                    interfaceList.add(interfaceName + ":" + version);
+            interfaceList.add(interfaceDetail);
+//                    serverAppMap.put(appName, interfaceList);
+        } else {
+            checkList.add(interfaceDetail);
+        }
     }
 }
