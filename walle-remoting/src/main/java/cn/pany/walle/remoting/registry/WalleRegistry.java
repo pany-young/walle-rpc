@@ -26,6 +26,7 @@ import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,13 +91,13 @@ public class WalleRegistry {
 
     public void addServiceListener(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
         try {
-            setServerInfo(serverAppMap,serverAddress);
+            setServerInfo(serverAppMap, serverAddress);
             ConnectionStateListener connectionStateListener = new ConnectionStateListener() {
                 public void stateChanged(CuratorFramework client, ConnectionState newState) {
                     if (ConnectionState.RECONNECTED == newState) {
-                        setServerInfo(serverAppMap,serverAddress);
-                    }else if (ConnectionState.CONNECTED == newState) {
-                        setServerInfo(serverAppMap,serverAddress);
+                        setServerInfo(serverAppMap, serverAddress);
+                    } else if (ConnectionState.CONNECTED == newState) {
+                        setServerInfo(serverAppMap, serverAddress);
                     }
                 }
             };
@@ -109,7 +110,7 @@ public class WalleRegistry {
         }
     }
 
-    private void setServerInfo(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress){
+    private void setServerInfo(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress) {
         for (Map.Entry<String, Set<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
             Set<InterfaceDetail> interfaceDetailSet = tempApp.getValue();
             if (interfaceDetailSet == null || interfaceDetailSet.isEmpty()) {
@@ -127,6 +128,7 @@ public class WalleRegistry {
             }
         }
     }
+
     public void removeServiceListener(Map<String, Set<InterfaceDetail>> serverAppMap, String serverAddress) throws Exception {
         for (Map.Entry<String, Set<InterfaceDetail>> tempApp : serverAppMap.entrySet()) {
             Set<InterfaceDetail> interfaceList = tempApp.getValue();
@@ -185,5 +187,13 @@ public class WalleRegistry {
             return false;
         }
         return true;
+    }
+
+    public boolean checkPath(String path) throws Exception {
+       Stat stat= register().checkExists().forPath(path);
+       if(stat ==null){
+           return false;
+       }
+       return true;
     }
 }

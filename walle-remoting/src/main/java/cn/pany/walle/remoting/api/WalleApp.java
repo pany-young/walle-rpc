@@ -46,36 +46,43 @@ public class WalleApp {
 
     private String appName;
 
-    private Set<WalleClient> walleClientSet=new HashSet<>();
+    private Set<WalleClient> walleClientSet = new HashSet<>();
 
     private WalleRegistry walleRegistry;
-    private  AppState appState=AppState.INIT;
-    private  String version;
+    private AppState appState = AppState.INIT;
+    private String version;
     private String appPath;
-    enum AppState{
-        INIT(1),INITED(2),CLOSE(9);
+
+    enum AppState {
+        INIT(1), INITED(2), CLOSE(9);
 
         private int code;
-        AppState(int code){this.code=code;}
+
+        AppState(int code) {
+            this.code = code;
+        }
     }
 
     public WalleApp(String appName, WalleRegistry walleRegistry) {
         this.walleRegistry = walleRegistry;
         this.appName = appName;
     }
-    public WalleApp(String appName, WalleRegistry walleRegistry,String version) {
+
+    public WalleApp(String appName, WalleRegistry walleRegistry, String version) {
         this.walleRegistry = walleRegistry;
         this.appName = appName;
-        this.version= version;
+        this.version = version;
     }
+
     PathChildrenCache childrenCache = null;
+
     /*从zookeeper获取服务端的信息
     进行连接
     对所需接口*/
-    public synchronized boolean init()  {
-        if(appState==AppState.INITED){
+    public synchronized boolean init() {
+        if (appState == AppState.INITED) {
             return true;
-        }else if(appState==AppState.CLOSE){
+        } else if (appState == AppState.CLOSE) {
             return false;
         }
 
@@ -83,36 +90,39 @@ public class WalleApp {
             if (walleRegistry.isRegister()) {
                 walleRegistry.register();
             }
-            appPath=WalleRegistry.ZK_SPLIT + appName +WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT ;
-            List<String> serverList = walleRegistry.getChildrenList(appPath);
+            appPath = WalleRegistry.ZK_SPLIT + appName + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT;
+            if (walleRegistry.checkPath(appPath)) {
 
-            //ip:port#version@protocol
-            for (String serverDetail : serverList) {
-                URL url = UrlUtils.parseURL(serverDetail, null);
 
-                byte[] interfaceListByte = walleRegistry.
-                getData(appPath + WalleRegistry.ZK_SPLIT + serverDetail);
-                Set<InterfaceDetail> interfaceList =
-                        JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailSet();
+                List<String> serverList = walleRegistry.getChildrenList(appPath);
 
-                WalleClient walleClient = new WalleClient(this,url,interfaceList);
-                if(!walleClientSet.contains(walleClient)){
-                    //连接成功后会在afterConnetion里walleApp.getWalleClientSet().add(this);
-                    walleClient.init();
+                //ip:port#version@protocol
+                for (String serverDetail : serverList) {
+                    URL url = UrlUtils.parseURL(serverDetail, null);
+
+                    byte[] interfaceListByte = walleRegistry.
+                            getData(appPath + WalleRegistry.ZK_SPLIT + serverDetail);
+                    Set<InterfaceDetail> interfaceList =
+                            JSON.parseObject(new String(interfaceListByte), ServerInfo.class).getInterfaceDetailSet();
+
+                    WalleClient walleClient = new WalleClient(this, url, interfaceList);
+                    if (!walleClientSet.contains(walleClient)) {
+                        //连接成功后会在afterConnetion里walleApp.getWalleClientSet().add(this);
+                        walleClient.init();
+                    }
+
                 }
-
-
             }
 
-            if(childrenCache==null){
+            if (childrenCache == null) {
                 try {
-                    childrenCache = new PathChildrenCache(this.getWalleRegistry().register(), WalleRegistry.ZK_SPLIT +  getAppName()+WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT, true);
+                    childrenCache = new PathChildrenCache(this.getWalleRegistry().register(), WalleRegistry.ZK_SPLIT + getAppName() + WalleRegistry.ZK_SPLIT + WalleRegistry.WALLE_SERVER_DEFULT, true);
 
                     PathChildrenCacheListener childrenCacheListener = new PathChildrenCacheListener() {
                         @Override
                         public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                             log.info("zk监听开始进行事件分析");
-                            if(event.getData()==null){
+                            if (event.getData() == null) {
                                 log.info("childEvent event.getData is null,data is :" + event.toString());
                                 return;
                             }
@@ -126,19 +136,19 @@ public class WalleApp {
                             String dataStr = new String(data.getData());
                             switch (event.getType()) {
                                 case CHILD_ADDED:
-                                    serverInfo=JSON.parseObject(new String(data.getData()), ServerInfo.class);
+                                    serverInfo = JSON.parseObject(new String(data.getData()), ServerInfo.class);
 //                            data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT));
-                                    lastPath=data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT)+1);
+                                    lastPath = data.getPath().substring(data.getPath().lastIndexOf(WalleRegistry.ZK_SPLIT) + 1);
                                     log.info("CHILD_ADDED : " + data.getPath() + "  数据:" + new String(data.getData()));
 
-                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailSet() );
-                                    if (! getWalleClientSet().contains(walleClient)) {
+                                    WalleClient walleClient = new WalleClient(WalleApp.this, UrlUtils.parseURL(lastPath, null), serverInfo.getInterfaceDetailSet());
+                                    if (!getWalleClientSet().contains(walleClient)) {
                                         getWalleClientSet().add(walleClient);
                                         walleClient.init();
-                                    }else {
-                                        for(WalleClient tmpCLient : getWalleClientSet()){
-                                            if(tmpCLient.equals(walleClient)){
-                                                if(!tmpCLient.isConnected()){
+                                    } else {
+                                        for (WalleClient tmpCLient : getWalleClientSet()) {
+                                            if (tmpCLient.equals(walleClient)) {
+                                                if (!tmpCLient.isConnected()) {
                                                     tmpCLient.init();
                                                 }
                                             }
@@ -171,25 +181,25 @@ public class WalleApp {
                         }
                     };
                     childrenCache.getListenable().addListener(childrenCacheListener);
-                    log.info("Register zk app watcher path:[{}] successfully!", WalleRegistry.ZK_SPLIT+ WalleConstant.NAME_SPACE+WalleRegistry.ZK_SPLIT +  getAppName());
+                    log.info("Register zk app watcher path:[{}] successfully!", WalleRegistry.ZK_SPLIT + WalleConstant.NAME_SPACE + WalleRegistry.ZK_SPLIT + getAppName());
                     childrenCache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
                 } catch (Exception e) {
-                    log.error("",e);
+                    log.error("", e);
                 }
 
-            }
 
+            }
         } catch (Exception e) {
             log.error("", e);
             return false;
         }
-        appState=AppState.INITED;
+        appState = AppState.INITED;
         return true;
     }
 
-   public List<URL> getServerList() throws Exception {
+    public List<URL> getServerList() throws Exception {
         List<String> serverList = walleRegistry.getChildrenList(appPath);
-        List<URL> urlList =new ArrayList<>();
+        List<URL> urlList = new ArrayList<>();
         //ip:port#version@protocol
         for (String serverDetail : serverList) {
             URL url = UrlUtils.parseURL(serverDetail, null);
@@ -198,11 +208,11 @@ public class WalleApp {
         return urlList;
     }
 
-    public void  getInterFace(String appName){
+    public void getInterFace(String appName) {
         try {
-            getWalleRegistry().getData(WalleRegistry.ZK_SPLIT+appName);
+            getWalleRegistry().getData(WalleRegistry.ZK_SPLIT + appName);
         } catch (Exception e) {
-          log.error("",e);
+            log.error("", e);
         }
     }
 
